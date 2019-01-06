@@ -10,33 +10,13 @@ function appInitReducer (state, _action) {
 
 function frequencyAnalysisLateReducer (state) {
   if (state.frequencyAnalysis && state.taskData) {
-    let {taskData: {alphabet, referenceFrequencies, frequencies, cipherText}, selectedText: {mode, pageColumns, selectedRows, selectedColumns}, frequencyAnalysis} = state;
+    let {taskData: {alphabet, referenceFrequencies, frequencies, cipherText}, frequencyAnalysis} = state;
     let textFrequencies = [];
-    if (mode === 'rows' && selectedRows.length !== 0) {
+    if (cipherText && alphabet) {
       const freqMap = new Map(alphabet.split('').map(c => [c, 0]));
-      for (let index of selectedRows) {
-        const startPos = index * pageColumns;
-        const endPos = startPos + pageColumns - 1;
-        countSymbols(freqMap, cipherText, startPos, endPos);
-      }
+      countSymbols(freqMap, cipherText, 0, cipherText.length-1);
       textFrequencies = normalizeAndSortFrequencies(freqMap.entries());
-    } else if (mode === 'columns' && selectedColumns.length !== 0) {
-      if (pageColumns !== 26) {
-        const rng = seedrandom(selectedColumns.join(','));
-        const baseProba = 1 / alphabet.length;
-        const maxRefProba = referenceFrequencies.reduce((a, x) => Math.max(a, x.proba), 0);
-        const epsilon = maxRefProba * 2 / 30; /* 2 pixels after scaling */
-        const entries = alphabet.split('').map(c => [c, baseProba + epsilon * (rng() * 2 - 1)]);
-        textFrequencies = normalizeAndSortFrequencies(entries);
-      } else {
-        const selectedFrequencies = new Array(alphabet.length).fill(0);
-        for (let col of selectedColumns) {
-          sumFrequencies(selectedFrequencies, frequencies[col]);
-        }
-        textFrequencies = normalizeAndSortFrequencies(
-          selectedFrequencies.map((proba, i) => [alphabet[i], proba]));
-      }
-    }
+    } 
     frequencyAnalysis = {...frequencyAnalysis, textFrequencies};
     state = {...state, frequencyAnalysis};
   }

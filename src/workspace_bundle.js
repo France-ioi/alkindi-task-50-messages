@@ -31,7 +31,7 @@ class Workspace extends React.PureComponent {
       <div>
         <h2>{"Message chiffré"}</h2>
         <CipheredText/>
-        <SelectedText/>
+      
         <h2>{"Analyse de fréquence de la sélection"}</h2>
         <FrequencyAnalysis/>
         <h2>{`Rotor${nbRotors > 1 ? 's' : ''} de déchiffrement`}</h2>
