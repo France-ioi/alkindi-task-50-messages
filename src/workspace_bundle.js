@@ -31,7 +31,6 @@ class Workspace extends React.PureComponent {
       <div>
         <h2>{"Message chiffré"}</h2>
         <CipheredText/>
-        <h2>{"Sélection de lignes ou colonnes"}</h2>
         <SelectedText/>
         <h2>{"Analyse de fréquence de la sélection"}</h2>
         <FrequencyAnalysis/>

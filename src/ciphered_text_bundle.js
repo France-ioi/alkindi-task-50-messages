@@ -49,6 +49,7 @@ class CipherTextView extends React.PureComponent {
 
   render () {
     const {width, height, visibleRows, cellWidth, cellHeight, bottom} = this.props;
+    console.log(visibleRows);
     return (
       <div>
         <div ref={this.refTextBox} onScroll={this.onScroll} style={{position: 'relative', width: width && `${width}px`, height: height && `${height}px`, overflowY: 'scroll'}}>

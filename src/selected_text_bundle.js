@@ -130,33 +130,22 @@ function SelectedTextViewSelector (state) {
 
 class SelectedTextView extends React.PureComponent {
 
+  componentDidMount() {
+    this.selectAll();
+  }
+
   render () {
     const {width, height, visible, cellWidth, cellHeight, pageColumns, bottom, mode} = this.props;
 
     return (
       <div>
-        <div className='form-inline' style={{marginBottom: '7px'}}>
-          <div className='btn-group' style={{marginRight: '7px'}}>
-            <Button onClick={this.setRowMode} active={mode === 'rows'} bsSize='sm'>{"lignes"}</Button>
-            <Button onClick={this.setColMode} active={mode === 'columns'} bsSize='sm'>{"colonnes"}</Button>
-          </div>
-          <div className='btn-group' style={{marginRight: '7px'}}>
-            <Button onClick={this.scrollPageUp} bsSize='sm'><i className='fa fa-angle-double-up'></i></Button>
-            <Button onClick={this.scrollRowUp} bsSize='sm'><i className='fa fa-angle-up'></i></Button>
-            <Button onClick={this.scrollRowDown} bsSize='sm'><i className='fa fa-angle-down'></i></Button>
-            <Button onClick={this.scrollPageDown} bsSize='sm'><i className='fa fa-angle-double-down'></i></Button>
-          </div>
-          <div className='form-group'>
-            <label style={{fontWeight: 'normal', marginRight: '3px'}}>{'Colonnes :'}</label>
-            <input type='number' value={this.state.pageColumns === null ? pageColumns : this.state.pageColumns} onChange={this.pageColumnsChange}
-            style={{marginRight: '7px', width:'70px', color: this.state.pageColumns === null ? 'black' : 'red'}} className={classnames('form-control', 'input-sm', this.state.pageColumns === null ? '' : 'inputError')}/>
-          </div>
+        {/* <div className='form-inline' style={{marginBottom: '7px'}}>
           <div className='btn-group'>
             <Button onClick={this.selectAll} bsSize='sm'>{" Tout sélectionner "}</Button>
             <Button onClick={this.selectNone} bsSize='sm'>{" Vider la sélection "}</Button>
           </div>
-        </div>
-        <div>
+        </div> */}
+        {/* <div>
           <div ref={this.refTextBox} onScroll={this.onScroll} style={{position: 'relative', width: width && `${width}px`, height: height && `${height}px`, overflowY: 'scroll'}}>
             {visible && (visible.rows||[]).map(({index, columns, selected}) =>
               <div key={index} className={classnames('selectText', 'selectText-rows', selected ? 'selected' : '')} style={{top: `${index * cellHeight}px`, width: `${cellWidth * pageColumns}px`, height: `${cellHeight}px`}}
@@ -180,7 +169,7 @@ class SelectedTextView extends React.PureComponent {
               </div>)}
             <div style={{position: 'absolute', top: `${bottom}px`, width: '1px', height: '1px'}}/>
           </div>
-        </div>
+        </div> */}
       </div>
     );
   }

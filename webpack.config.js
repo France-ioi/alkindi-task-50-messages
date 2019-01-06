@@ -64,7 +64,6 @@ const config = module.exports = {
     contentBase: path.join(__dirname, '/'),
     compress: false,
     port: 8080,
-    open:true,
     hot:true
   }
 };
