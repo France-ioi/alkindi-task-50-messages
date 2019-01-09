@@ -81,8 +81,8 @@ class RotorView extends React.PureComponent {
     const {index, editableRow, cells, shift, editingRank, activeRank} = this.props;
     const nbCells = cells.length;
     return (
-      <div style={{width: `${20*nbCells}px`}}>
-        <div className='clearfix'>
+      <div style={{width: "100%"}}>
+        <div className='clearfix' style={{marginLeft: "130px"}}>
           {range(0, nbCells).map(rank => {
             const {editable, locked, conflict, hint} = cells[rank];
             const isActive = activeRank === rank;
@@ -170,7 +170,7 @@ class RotorCell extends React.PureComponent {
     if (editableRow === 'top') {
       return (
         <div style={columnStyle}>
-          {editableCell}{staticCell}{lock}
+          {staticCell}{editableCell}{lock}
         </div>
       );
     } else {

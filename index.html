@@ -14,15 +14,10 @@
 <body>
     <div id="container" class="container"></div>
     <script type="text/javascript">
-        window.stringsLanguage = 'en';
+        window.stringsLanguage = 'fr';
         var options = {
             server_module: {
-                baseUrl: 'http://localhost:3101/',
-                devel: {
-                    itemUrl: "http://localhost:8080/?taskID=http://localhost/2019-test&version=1",
-                    randomSeed: 1,
-                    sHintsRequested: "[{\"rotorIndex\": 0, \"cellRank\": 1}]"
-                }
+                baseUrl: 'http://194.33.43.205:3101/'
             }
         };
         window.app = ReactTask.run(document.getElementById('container'), options);

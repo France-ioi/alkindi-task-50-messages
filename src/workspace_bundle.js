@@ -25,8 +25,9 @@ function WorkspaceSelector (state) {
 }
 
 class Workspace extends React.PureComponent {
-  render () {
+  render () { 
     const {CipheredText, SelectedText, FrequencyAnalysis, Rotor, SchedulingControls, DecipheredText, nbRotors, hintRequest, HintRequestFeedback} = this.props;
+
     return (
       <div>
         <h2>{"Message chiffré"}</h2>
@@ -34,23 +35,37 @@ class Workspace extends React.PureComponent {
       
         <h2>{"Analyse de fréquence de la sélection"}</h2>
         <FrequencyAnalysis/>
-        <h2>{`Rotor${nbRotors > 1 ? 's' : ''} de déchiffrement`}</h2>
+        <h2>Substitution:</h2>
         <div className='clearfix'>
-          <div style={{border: '1px solid #ccc', float: 'right', width: '200px', padding: '10px', borderRadius: '5px', backgroundColor: '#f9f9f9', fontSize: '12px', marginRight: '15px'}}>
-            <p style={{fontWeight: 'bold', textAlign: 'center'}}>{"Indices"}</p>
-            <p>{"Pour un coût de "}<span style={{fontWeight: 'bold'}}>{"5 points"}</span>{", cliquez sur une case de rotor et validez pour obtenir sa valeur."}</p>
-            <div style={{textAlign: 'center', margin: '10px 0'}}>
-              <Button onClick={this.requestHint} disabled={!hintRequest}>{`Valider`}</Button>
-            </div>
-          </div>
-          <div style={{float: 'left'}}>
+          <div>
             {range(0, nbRotors).map(index => <Rotor key={index} index={index}/>)}
-            <SchedulingControls/>
+            {/* <SchedulingControls/> */}
+          </div>
+        </div>
+        
+        <div style={{width:"100%", margin:"20px 0"}}>
+          <div style={{textAlign:'center'}}>
+          <h5 >Hints</h5>
+            <div style={{display: "inline-grid",padding:"10px",border: "1px solid #000", borderRight:"0",width: "30%", background:"rgb(202, 202, 202)"}}>
+              <p style={{fontWeight: 'bold', textAlign: 'center'}}>{"Indices"}</p>
+              <p>{"Pour un coût de "}<span style={{fontWeight: 'bold'}}>{"5 points"}</span>{", cliquez sur une case de rotor et validez pour obtenir sa valeur."}</p>
+              <div style={{textAlign: 'center', margin: '10px 0'}}>
+                <Button onClick={this.requestHint} disabled={!hintRequest}>{`Valider`}</Button>
+              </div>
+            </div>
+
+            <div style={{display: "inline-grid",padding:"10px",border: "1px solid #000", borderLeft:"0",width: "30%", background:"rgb(202, 202, 202)"}}>
+              <p style={{fontWeight: 'bold', textAlign: 'center'}}>{"Indices"}</p>
+              <p>{"Pour un coût de "}<span style={{fontWeight: 'bold'}}>{"5 points"}</span>{", cliquez sur une case de rotor et validez pour obtenir sa valeur."}</p>
+              <div style={{textAlign: 'center', margin: '10px 0'}}>
+                <Button onClick={this.requestHint} disabled={!hintRequest}>{`Valider`}</Button>
+              </div>
+            </div>
           </div>
         </div>
         <HintRequestFeedback/>
-        <h2>{"Texte déchiffré"}</h2>
-        <DecipheredText/>
+          <h2>{"Texte déchiffré"}</h2>
+          <DecipheredText/>
       </div>
     );
   }
