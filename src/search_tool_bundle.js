@@ -2,10 +2,46 @@
 import React from 'react';
 import {connect} from 'react-redux';
 
-function SearchToolViewSelector (state) {
-  const {actions, searchTool} = state;
+import {updateGridGeometry, updateGridVisibleRows} from './utils';
+
+function appInitReducer (state, _action) {
+  return {...state, cipheredText: {
+    cellWidth: 15,
+    cellHeight: 18,
+    scrollTop: 0,
+    nbCells: 0
+  }};
+}
+
+function taskInitReducer (state, _action) {
+  let {cipheredText, taskData: {cipherText}} = state;
+  cipheredText = {...cipheredText, cells: cipherText, nbCells: cipherText.length};
+  cipheredText = updateGridVisibleRows(cipheredText);
+  return {...state, cipheredText};
+}
+
+function cipheredTextResizedReducer (state, {payload: {width}}) {
+  let {cipheredText} = state;
+  cipheredText = {...cipheredText, width, height: 8 * cipheredText.cellHeight};
+  cipheredText = updateGridGeometry(cipheredText);
+  cipheredText = updateGridVisibleRows(cipheredText);
+  return {...state, cipheredText};
+}
+
+function cipheredTextScrolledReducer (state, {payload: {scrollTop}}) {
+  let {cipheredText} = state;
+  cipheredText = {...cipheredText, scrollTop};
+  cipheredText = updateGridVisibleRows(cipheredText);
+  return {...state, cipheredText};
+}
+
+function CipherTextViewSelector (state) {
+  const {actions, cipheredText} = state;
+  const {cipheredTextResized, cipheredTextScrolled} = actions;
+  const {width, height, cellWidth, cellHeight, bottom, pageRows, pageColumns, visible} = cipheredText;
   return {
-    searchTool
+    cipheredTextResized, cipheredTextScrolled,
+    width, height, visibleRows: visible.rows, cellWidth, cellHeight, bottom, pageRows, pageColumns
   };
 }
 
@@ -14,6 +50,23 @@ class SearchToolView extends React.PureComponent {
     super(props);
     this.state = {
       searchString : '',
+      totalString: '',
+
+    }
+  }
+
+  componentWillReceiveProps = (newProps) => {
+
+    if(newProps.visibleRows != this.props.visibleRows) {
+      let total =[];
+      newProps.visibleRows.forEach((row) => {
+        row.columns.forEach((item) => {
+          total.push(item.cell)
+        })
+      });
+      this.setState({ totalString : total.join('')}, () => {
+        this.getHighlightsArray();
+      })
     }
   }
 
@@ -21,11 +74,31 @@ class SearchToolView extends React.PureComponent {
     this.setState({ searchString : e.target.value })
   }
 
+  getHighlightsArray() {
+    // Get shouldHighlight element Array
+    let totalString = this.state.totalString;
+    let searchString = this.state.searchString.toUpperCase();
+    let searchString_length = searchString.length;
+    let shouldHighLightIndexArray = [];
+
+    if(totalString && searchString) {
+      let firstPosition = totalString.indexOf(searchString);
+      if(firstPosition > -1) {
+        for(let k = 0 ; k < searchString_length; k++) {
+          shouldHighLightIndexArray.push(firstPosition + k)
+        }
+      }
+    }
+
+    this.props.getHighlightArray(shouldHighLightIndexArray);
+  }
+
   findString = () => {
-    this.props.search(this.state.searchString)
+    this.getHighlightsArray();
   }
 
   render () {
+    const {width, height, visibleRows, cellWidth, cellHeight, bottom} = this.props;
     return (
       <div className="searchToolWrapper">
         <div className="pattern">
@@ -53,10 +126,16 @@ class SearchToolView extends React.PureComponent {
 
 export default {
   actions: {
+    cipheredTextResized: 'CipheredText.Resized' /* {width: number, height: number} */,
+    cipheredTextScrolled: 'CipheredText.Scrolled' /* {scrollTop: number} */,
   },
   actionReducers: {
+    appInit: appInitReducer,
+    taskInit: taskInitReducer,
+    cipheredTextResized: cipheredTextResizedReducer,
+    cipheredTextScrolled: cipheredTextScrolledReducer,
   },
   views: {
-    SearchTool: connect(SearchToolViewSelector)(SearchToolView),
+    SearchTool: connect(CipherTextViewSelector)(SearchToolView),
   }
 };

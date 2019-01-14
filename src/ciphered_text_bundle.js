@@ -49,44 +49,17 @@ class CipherTextView extends React.PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      searchString: '',
-      totalString: '',
       shouldHighLightIndexArray: [],
     }
   }
 
   componentWillReceiveProps = (newProps) => {
-    if(newProps.searchString != this.props.searchString) {
-      this.setState({ searchString: newProps.searchString } , () => {
-        // Get shouldHighlight element Array
-        let totalString = this.state.totalString;
-        let searchString = this.state.searchString.toUpperCase();
-        let searchString_length = searchString.length;
-
-        let shouldHighLightIndexArray = [];
-        if(totalString.indexOf(searchString) > -1) {
-          for(let k = 0 ; k < searchString_length; k++) {
-            shouldHighLightIndexArray.push(totalString.indexOf(searchString) + k)
-          }
-
-          this.setState({shouldHighLightIndexArray: shouldHighLightIndexArray})
-        }
-      })
-    }
-
-    if(newProps.visibleRows != this.props.visibleRows) {
-      let total =[];
-      newProps.visibleRows.forEach((row) => {
-        row.columns.forEach((item) => {
-          total.push(item.cell)
-        })
-      });
-      this.setState({ totalString : total.join('')})
+    if(newProps.highLightArray != this.props.highLightArray) {
+      this.setState({shouldHighLightIndexArray: newProps.highLightArray});
     }
   }
 
   checkHighlighted = (column, index) => {
-    
     // Get Column Number and Row number;
     let visibleRows = this.props.visibleRows;
     let columnIndex = 0;
@@ -103,6 +76,7 @@ class CipherTextView extends React.PureComponent {
     } else {
       return false;
     }
+
   }
 
   render () {

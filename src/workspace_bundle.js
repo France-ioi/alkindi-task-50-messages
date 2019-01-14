@@ -28,12 +28,12 @@ class Workspace extends React.PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      searchString: ''
+      highLightArray: ''
     }
   }
 
-  search = (str) => {
-    this.setState({searchString : str })
+  getHighlightArray = (arr) => {
+    this.setState({highLightArray : arr })
   }
 
   render () { 
@@ -42,10 +42,10 @@ class Workspace extends React.PureComponent {
     return (
       <div>
         <h2>{"Message chiffré"}</h2>
-        <CipheredText searchString={this.state.searchString}/>
+        <CipheredText highLightArray={this.state.highLightArray}/>
         
         <h2>Search Tool</h2>
-        <SearchTool search={this.search}/>
+        <SearchTool getHighlightArray={this.getHighlightArray}/>
 
         <h2>{"Analyse de fréquence de la sélection"}</h2>
         <FrequencyAnalysis/>
