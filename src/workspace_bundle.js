@@ -32,7 +32,9 @@ class Workspace extends React.PureComponent {
       <div>
         <h2>{"Message chiffré"}</h2>
         <CipheredText/>
-      
+        
+        <h2>Search Tool</h2>
+        
         <h2>{"Analyse de fréquence de la sélection"}</h2>
         <FrequencyAnalysis/>
         <h2>Substitution:</h2>
