@@ -46,6 +46,61 @@ function CipherTextViewSelector (state) {
 }
 
 class CipherTextView extends React.PureComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      searchString: '',
+      totalString: '',
+    }
+  }
+
+  componentWillReceiveProps = (newProps) => {
+    if(newProps.searchString != this.props.searchString) {
+      this.setState({ searchString: newProps.searchString })
+    }
+
+    if(newProps.visibleRows != this.props.visibleRows) {
+      let total =[];
+      newProps.visibleRows.forEach((row) => {
+        row.columns.forEach((item) => {
+          total.push(item.cell)
+        })
+      });
+      this.setState({ totalString : total.join('')})
+    }
+  }
+
+  checkHighlighted = (column, index) => {
+    // Get shouldHighlight element Array
+    let totalString = this.state.totalString;
+    let searchString = this.state.searchString.toUpperCase();
+    let searchString_length = searchString.length;
+
+    let shouldHighLightIndexArray = [];
+    if(totalString.indexOf(searchString) > -1) {
+      for(let k = 0 ; k < searchString_length; k++) {
+        shouldHighLightIndexArray.push(totalString.indexOf(searchString) + k)
+      }
+    }
+
+    // Get Column Number and Row number;
+    let visibleRows = this.props.visibleRows;
+    let columnIndex = 0;
+    for(let i = 0; i < visibleRows.length; i++) {
+      if(JSON.stringify(visibleRows[i].columns) == JSON.stringify(column)) {
+        columnIndex = i;
+        break;
+      }
+    }
+
+    
+    let currentItemIndex = columnIndex * 49 + index;
+    if(shouldHighLightIndexArray.indexOf(currentItemIndex) > -1) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   render () {
     const {width, height, visibleRows, cellWidth, cellHeight, bottom} = this.props;
@@ -55,7 +110,7 @@ class CipherTextView extends React.PureComponent {
           {(visibleRows||[]).map(({index, columns}) =>
             <div key={index} style={{position: 'absolute', top: `${index * cellHeight}px`}}>
               {columns.map(({index, cell}) =>
-                <span key={index} style={{position: 'absolute', left: `${index * cellWidth}px`, width: `${cellWidth}px`, height: `${cellHeight}px`}}>
+                <span key={index} style={{position: 'absolute', left: `${index * cellWidth}px`, width: `${cellWidth}px`, height: `${cellHeight}px`, backgroundColor: `${this.checkHighlighted(columns, index) ? '#aaffaa' : ''}`}}>
                   {cell || ' '}
                 </span>)}
             </div>)}

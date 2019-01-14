@@ -7,7 +7,7 @@ import classnames from 'classnames';
 
 function WorkspaceSelector (state) {
   const {
-    views: {CipheredText, SelectedText, FrequencyAnalysis, Rotor, SchedulingControls, DecipheredText, HintRequestFeedback},
+    views: {CipheredText, SearchTool, SelectedText, FrequencyAnalysis, Rotor, SchedulingControls, DecipheredText, HintRequestFeedback},
     actions: {requestHint},
     rotors, editing
   } = state;
@@ -19,24 +19,37 @@ function WorkspaceSelector (state) {
     }
   }
   return {
-    CipheredText, SelectedText, FrequencyAnalysis, Rotor, SchedulingControls, DecipheredText,
+    CipheredText, SearchTool, SelectedText, FrequencyAnalysis, Rotor, SchedulingControls, DecipheredText,
     HintRequestFeedback, requestHint, hintRequest, nbRotors: rotors.length
   };
 }
 
 class Workspace extends React.PureComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      searchString: ''
+    }
+  }
+
+  search = (str) => {
+    this.setState({searchString : str })
+  }
+
   render () { 
-    const {CipheredText, SelectedText, FrequencyAnalysis, Rotor, SchedulingControls, DecipheredText, nbRotors, hintRequest, HintRequestFeedback} = this.props;
+    const {CipheredText, SearchTool, SelectedText, FrequencyAnalysis, Rotor, SchedulingControls, DecipheredText, nbRotors, hintRequest, HintRequestFeedback} = this.props;
 
     return (
       <div>
         <h2>{"Message chiffré"}</h2>
-        <CipheredText/>
+        <CipheredText searchString={this.state.searchString}/>
         
         <h2>Search Tool</h2>
-        
+        <SearchTool search={this.search}/>
+
         <h2>{"Analyse de fréquence de la sélection"}</h2>
         <FrequencyAnalysis/>
+
         <h2>Substitution:</h2>
         <div className='clearfix'>
           <div>

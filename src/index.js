@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import './style.css';
 
 import CipheredTextBundle from './ciphered_text_bundle';
+import SearchToolBundle from './search_tool_bundle';
 import FrequencyAnalysisBundle from './frequency_analysis_bundle';
 import SchedulingBundle from './scheduling_bundle';
 import RotorsBundle from './rotors_bundle';
@@ -24,6 +25,7 @@ const TaskBundle = {
     },
     includes: [
         CipheredTextBundle,
+        SearchToolBundle,
         FrequencyAnalysisBundle,
         SchedulingBundle,
         RotorsBundle,

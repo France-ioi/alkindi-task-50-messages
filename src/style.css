@@ -167,3 +167,37 @@
 .feedbackBlock {
     cursor: pointer;
 }
+
+.searchToolWrapper {
+    border: 1px solid #000;
+    padding: 5px 10px;
+}
+
+.searchToolWrapper .pattern {
+    margin-bottom: 10px;
+}
+
+.searchToolWrapper .pattern .caption {
+    font-size: 20px;
+
+}
+
+.searchToolWrapper .pattern .searchString {
+    margin-left: 20px;
+    width: 500px;
+}
+
+.searchToolWrapper .pattern .foundedCounts {
+    float: right;
+}
+
+.searchToolWrapper .notification {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.searchToolWrapper .notification button {
+    width: 100%;
+    margin-bottom: 5px;
+}
