@@ -16,8 +16,12 @@
     <script type="text/javascript">
         window.stringsLanguage = 'fr';
         var options = {
+            defaults: {
+                taskID: 'alkindi-task-50-messages',
+                version: 1
+                },
             server_module: {
-                baseUrl: 'http://194.33.43.205:3101/'
+                baseUrl: 'http://your.server:3101/'
             }
         };
         window.app = ReactTask.run(document.getElementById('container'), options);
