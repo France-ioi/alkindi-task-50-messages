@@ -28,7 +28,7 @@ function rotorCellEditMovedReducer (state, {payload: {rotorMove, cellMove}}) {
     cellRank = wrapAround(cellRank + cellMove, alphabet.length);
     cell = rotors[rotorIndex].cells[cellRank];
     /* If we looped back to the starting point, the move is impossible. */
-    if (rotorStop == rotorIndex || cellStop == cellRank) return state;
+    if (/* rotorStop == rotorIndex || */ cellStop == cellRank) return state;
   } while (cell.hint || cell.locked);
   return update(state, {editing: {$set: {rotorIndex, cellRank}}});
 }
@@ -85,7 +85,7 @@ class RotorView extends React.PureComponent {
         <div className='clearfix' style={{marginLeft: "130px"}}>
           {range(0, nbCells).map(rank => {
             const {editable, locked, conflict, hint} = cells[rank];
-            const isActive = activeRank === rank;
+            const isActive = false;
             const isEditing = editingRank === rank && !locked && !hint;
             const isLast = nbCells === rank + 1;
             const shiftedIndex = (rank + shift) % nbCells;

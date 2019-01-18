@@ -114,11 +114,11 @@ class TextCell extends React.PureComponent {
       height: `42px`,
       border: 'solid #777',
       borderWidth: '1px 0',
-      backgroundColor: current ? '#aaa' : (locked ? '#ccc' : '#fff'),
+      backgroundColor: (locked ? '#ccc' : '#fff'),
       cursor: 'pointer'
     };
     return (
-      <div style={cellStyle} onClick={this._jump}>
+      <div style={cellStyle} /* onClick={this._jump} */>
         <div style={{width: '100%', height: '20px', borderBottom: '1px solid #ccc', textAlign: 'center'}}>{ciphered || ' '}</div>
         <div style={{width: '100%', height: '20px', textAlign: 'center'}}>{clear || ' '}</div>
       </div>

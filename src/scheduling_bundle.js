@@ -23,7 +23,7 @@ function appInitReducer (state, _action) {
 function taskInitReducer (state, _action) {
   let {scheduling, taskData: {cipherText}} = state;
   scheduling = {...scheduling, endPosition: cipherText.length - 1};
-  return {...state, scheduling};
+  return schedulingStatusChangedReducer({...state, scheduling}, { payload: {status: 'end'} }); //automating decrypt-text generation, same as what happens with selected >>|
 }
 
 function schedulingStatusChangedReducer (state, {payload: {status}}) {

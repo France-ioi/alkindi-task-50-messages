@@ -224,13 +224,13 @@ export function applyRotor (rotor, shift, result) {
     rank = applyShift(rotor.size, -shift, rank);
     cell = rotor.cells[rank];
   }
-  /* Apply the permutation. */
-  rank = rotor.forward[rank];
   /* Positive shift to the static bottom row after permutation. */
   if (rotor.editableRow === 'top') {
     cell = rotor.cells[rank];
     rank = applyShift(rotor.size, shift, rank);
   }
+  /* Apply the permutation. */
+  rank = rotor.backward[rank];
   /* Save new rank (can be -1) and attributes. */
   result.rank = rank;
   if (cell) {
