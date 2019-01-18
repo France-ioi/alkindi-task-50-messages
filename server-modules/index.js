@@ -156,7 +156,7 @@ const referenceFrequencies = [
 
 function generateKey (alphabet, rngKeys) {
     let key = shuffle({random: rngKeys, deck: alphabet.split('')}).cards.join('');
-    key = "DLMEFVAQRSTNUCWXGOPYZBHIJK";
+    // key = "DLMEFVAQRSTNUCWXGOPYZBHIJK";
     return key; 
 }
 
