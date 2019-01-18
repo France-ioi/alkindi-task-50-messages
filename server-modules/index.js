@@ -24,7 +24,7 @@ module.exports.config = {
 */
 const versionRotors = [
     [],
-    [{schedule: 1, editableRow: 'top'}],
+    [{schedule: 0, editableRow: 'top'}],
     [{schedule: 1, editableRow: 'top'}, {schedule: 0, editableRow: 'top'}],
     [{schedule: 1, editableRow: 'top'}, {schedule: 26, editableRow: 'top'}, {schedule: 26*26, editableRow: 'top'}]
 ];
@@ -92,22 +92,23 @@ function generateTaskData (task) {
     const rng0 = seedrandom(task.random_seed);
     const rngKeys = seedrandom(rng0());
     const rngText = seedrandom(rng0());
-    const version = parseInt(task.params.version) || 0;
+    const version = /* parseInt(task.params.version) ||*/ 1;
     const clearText = generate(rngText, 30000, 31000, false);
+    // const clearText = alphabet;
     const rotors = versionRotors[version]; // specification of decoding rotors
-    const encodingKeys = generateKeys(alphabet, rngKeys, rotors); // encoding keys in decoding order
-    const decodingKeys = encodingKeys.map(key => inversePermutation(alphabet, key));
-    const cipherText = enigmaEncode(alphabet, rotors, encodingKeys, clearText);
+    const encodingKey = generateKey(alphabet, rngKeys); // encoding keys in decoding order
+    // const decodingKey = inversePermutation(alphabet, encodingKey);
+    const cipherText = monoAlphabeticEncode(alphabet, encodingKey, clearText);
     const frequencies = range(0, alphabet.length).map(start =>
         frequencyAnalysis(cipherText, alphabet, start, alphabetSize));
     const hintsRequested = task.hints_requested ? JSON.parse(task.hints_requested).filter(hr => hr !== null) : [];
     /* Add E -> E mappings to fixed rotors */
-    rotors.forEach(function (rotor, rotorIndex) {
-        if (rotor.schedule === 0) {
-            hintsRequested.push({rotorIndex, cellRank: alphabet.indexOf('E')});
-        }
-    });
-    const hints = grantHints(decodingKeys, hintsRequested);
+    // rotors.forEach(function (rotor, rotorIndex) {
+    //     if (rotor.schedule === 0) {
+    //         hintsRequested.push({rotorIndex, cellRank: alphabet.indexOf('E')});
+    //     }
+    // });
+    const hints = grantHints(encodingKey, hintsRequested);
     const publicData = {
         alphabet,
         cipherText,
@@ -118,8 +119,7 @@ function generateTaskData (task) {
     };
     const privateData = {
         clearText,
-        encodingKeys,
-        decodingKeys
+        encodingKey,
     };
     return {publicData, privateData};
 }
@@ -152,6 +152,41 @@ const referenceFrequencies = [
   {symbol: 'W', proba: 0.0011},
   {symbol: 'K', proba: 0.0005}
 ];
+
+function generateKey (alphabet, rngKeys) {
+    let key = shuffle({random: rngKeys, deck: alphabet.split('')}).cards.join('');
+    return key;
+}
+
+function monoAlphabeticEncode(alphabet, encodingKey, clearText) {
+    let i, j, ciphertext = "";
+    for (i = 0; i < clearText.length; i++) {
+        for (j = 0; j < alphabet.length; j++) {
+            if (clearText[i] == alphabet[j]) {
+                ciphertext += encodingKey[j];
+                break;
+            }
+        }
+    }
+    return ciphertext;
+}
+
+function monoAlphabeticDecode(alphabet, encodingKey, ciphertext) {
+    let i, j, clearText = "";
+    for (i = 0; i < ciphertext.length; i++) {
+        for (j = 0; j < alphabet.length; j++) {
+            if (clearText[i] == alphabet[j]) {
+                ciphertext += encodingKey[j];
+                break;
+            }
+        }
+    }
+    return clearText;
+}
+
+//-----------------------------------------------------------------------------------------------
+// rotor task code
+// ----------------------------------------------------------------------------------------------:
 
 function generateKeys (alphabet, rngKeys, rotors) {
     const keys = new Array(rotors.length);
@@ -274,14 +309,14 @@ function hintRequestEqual (h1, h2) {
     return h1.rotorIndex === h2.rotorIndex && h1.cellRank == h2.cellRank;
 }
 
-function grantHints (decodingKeys, hintRequests) {
+function grantHints (decodingKey, hintRequests) {
     return hintRequests.map(function (hintRequest) {
         if (typeof hintRequest === 'string') {
             hintRequest = JSON.parse(hintRequest);
         }
-        const {rotorIndex, cellRank} = hintRequest;
-        const symbol = decodingKeys[rotorIndex][cellRank];
-        return {rotorIndex, cellRank, symbol};
+        const {cellRank} = hintRequest;
+        const symbol = decodingKey[cellRank];
+        return { rotorIndex: 0, cellRank, symbol};
     });
 }
 
