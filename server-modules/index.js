@@ -61,13 +61,13 @@ module.exports.requestHint = function (args, callback) {
 
 module.exports.gradeAnswer = function (args, task_data, callback) {
     let {rotors: submittedKeys} = JSON.parse(args.answer.value);
-    const {publicData: {alphabet, cipherText, rotors}, privateData: {keys, clearText}} = generateTaskData(args.task);
+    const {publicData: {alphabet, cipherText}, privateData: {clearText}} = generateTaskData(args.task);
     const hints_requested = args.task.hints_requested ? JSON.parse(args.task.hints_requested) : [];
     submittedKeys = submittedKeys.map(cells => cells.map(i => i === -1 ? ' ' : alphabet[i]).join(''));
     // submittedKeys.map(key => inversePermutation(alphabet, key));
     const evalLength = 200; /* Score on first 200 characters only */
     const evalText = cipherText.slice(0, evalLength);
-    const decodedText = enigmaDecode(alphabet, rotors, submittedKeys, evalText);
+    const decodedText = monoAlphabeticDecode(alphabet, submittedKeys[0], evalText);
     let correctChars = 0;
     for (let i = 0; i < evalLength; i += 1) {
         if (clearText[i] === decodedText[i]) {
@@ -94,10 +94,10 @@ function generateTaskData (task) {
     const rngText = seedrandom(rng0());
     const version = /* parseInt(task.params.version) ||*/ 1;
     const clearText = generate(rngText, 30000, 31000, false);
-    // const clearText = alphabet;
+    // const clearText = alphabet.repeat(10);
     const rotors = versionRotors[version]; // specification of decoding rotors
     const encodingKey = generateKey(alphabet, rngKeys); // encoding keys in decoding order
-    // const decodingKey = inversePermutation(alphabet, encodingKey);
+    const decodingKey = inversePermutation(alphabet, encodingKey);
     const cipherText = monoAlphabeticEncode(alphabet, encodingKey, clearText);
     const frequencies = range(0, alphabet.length).map(start =>
         frequencyAnalysis(cipherText, alphabet, start, alphabetSize));
@@ -108,7 +108,7 @@ function generateTaskData (task) {
     //         hintsRequested.push({rotorIndex, cellRank: alphabet.indexOf('E')});
     //     }
     // });
-    const hints = grantHints(encodingKey, hintsRequested);
+    const hints = grantHints(alphabet, encodingKey, decodingKey, hintsRequested);
     const publicData = {
         alphabet,
         cipherText,
@@ -120,6 +120,7 @@ function generateTaskData (task) {
     const privateData = {
         clearText,
         encodingKey,
+        decodingKey
     };
     return {publicData, privateData};
 }
@@ -155,7 +156,8 @@ const referenceFrequencies = [
 
 function generateKey (alphabet, rngKeys) {
     let key = shuffle({random: rngKeys, deck: alphabet.split('')}).cards.join('');
-    return key;
+    key = "DLMEFVAQRSTNUCWXGOPYZBHIJK";
+    return key; 
 }
 
 function monoAlphabeticEncode(alphabet, encodingKey, clearText) {
@@ -175,14 +177,36 @@ function monoAlphabeticDecode(alphabet, encodingKey, ciphertext) {
     let i, j, clearText = "";
     for (i = 0; i < ciphertext.length; i++) {
         for (j = 0; j < alphabet.length; j++) {
-            if (clearText[i] == alphabet[j]) {
-                ciphertext += encodingKey[j];
+            if (ciphertext[i] == alphabet[j]) {
+                clearText += encodingKey[j];
                 break;
             }
         }
     }
     return clearText;
 }
+
+function hintRequestEqual (h1, h2) {
+    return h1.rotorIndex === h2.rotorIndex && h1.cellRank == h2.cellRank && h1.type == h2.type;
+}
+
+function grantHints (alphabet, encodingKey, decodingKey, hintRequests) {
+    return hintRequests.map(function (hintRequest) {
+        if (typeof hintRequest === 'string') {
+            hintRequest = JSON.parse(hintRequest);
+        }
+        let symbol;
+        let {cellRank, type} = hintRequest;
+        if (type === 'type_1') {
+            symbol = decodingKey[cellRank];
+        } else {
+            symbol = alphabet[cellRank];
+            cellRank = alphabet.indexOf(encodingKey[cellRank]);
+        }
+        return { rotorIndex: 0, cellRank, symbol, type};
+    });
+}
+
 
 //-----------------------------------------------------------------------------------------------
 // rotor task code
@@ -305,20 +329,7 @@ function round (value, decimals) {
   return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
 }
 
-function hintRequestEqual (h1, h2) {
-    return h1.rotorIndex === h2.rotorIndex && h1.cellRank == h2.cellRank;
-}
 
-function grantHints (decodingKey, hintRequests) {
-    return hintRequests.map(function (hintRequest) {
-        if (typeof hintRequest === 'string') {
-            hintRequest = JSON.parse(hintRequest);
-        }
-        const {cellRank} = hintRequest;
-        const symbol = decodingKey[cellRank];
-        return { rotorIndex: 0, cellRank, symbol};
-    });
-}
 
 function testTopEditable (alphabet, key) {
     /*
