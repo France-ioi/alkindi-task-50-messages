@@ -11,7 +11,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import {Provider} from 'react-redux';
 import queryString from 'query-string';
-import {createStore, applyMiddleware} from 'redux';
+import {createStore, applyMiddleware, compose} from 'redux';
 import {default as createSagaMiddleware} from 'redux-saga';
 import {call} from 'redux-saga/effects';
 
@@ -40,8 +40,17 @@ export default function (container, options, TaskBundle) {
             return {...state, errors: [ex]};
         }
     };
+
     const sagaMiddleware = createSagaMiddleware();
-    const enhancer = applyMiddleware(sagaMiddleware);
+    let enhancer;
+
+    if (process.env.NODE_ENV === 'development') {
+        const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+        enhancer = composeEnhancers(applyMiddleware(sagaMiddleware));
+    } else {
+        enhancer = applyMiddleware(sagaMiddleware);
+    }
+
     const store = createStore(safeReducer, {actions, views, selectors}, enhancer);
 
     /* Start the sagas. */
