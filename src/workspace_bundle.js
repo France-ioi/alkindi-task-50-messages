@@ -7,14 +7,14 @@ import {selectTaskData} from './utils';
 function WorkspaceSelector (state) {
   const {alphabet, numMessages, hints} = selectTaskData(state);
   const {
-    views: {CipheredText, FrequencyAnalysis, Rotor, DecipheredText, MultiMessage, HintRequestFeedback},
+    views: {CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback},
     actions: {requestHint, hintRequestFeedbackCleared}, messageIndex, hintRequest: {isActive: isHintInProgress},
     taskData: {config: {showSearchTool}},
-    rotors, editing
+    substitutions, editing
   } = state;
   let hintRequest = null;
   // creating hints request data {messageIndex, position},
-  const {cells} = rotors[messageIndex];
+  const {cells} = substitutions[messageIndex];
   if (typeof editing.cellRank === 'number') {
     const editingCell = cells[editing.cellRank];
     if (!editingCell.hint && !editingCell.locked) {
@@ -23,7 +23,7 @@ function WorkspaceSelector (state) {
   }
   const lockedLetters = cells.filter(cell => cell.locked).map(cell => cell.editable);
   return {
-    CipheredText, FrequencyAnalysis, Rotor, DecipheredText, MultiMessage, HintRequestFeedback,
+    CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback,
     hintRequestFeedbackCleared, requestHint,
     alphabet, hints, messageIndex, numMessages, showSearchTool, hintRequest, isHintInProgress, lockedLetters
   };
@@ -82,7 +82,7 @@ class HintRequestView extends React.PureComponent {
 class Workspace extends React.PureComponent {
   render () {
     const {
-      CipheredText, FrequencyAnalysis, Rotor, DecipheredText, MultiMessage, HintRequestFeedback,
+      CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback,
       alphabet, hints, messageIndex, numMessages, showSearchTool, hintRequest, isHintInProgress, lockedLetters
     } = this.props;
     return (
@@ -102,7 +102,7 @@ class Workspace extends React.PureComponent {
         <h2>Substitution:</h2>
         <div className="clearfix">
           <div>
-            <Rotor index={messageIndex} />
+            <Substitution index={messageIndex} />
           </div>
         </div>
         <div style={{width: "100%", margin: "20px 0"}}>
@@ -116,7 +116,7 @@ class Workspace extends React.PureComponent {
                 {"Pour un coût de "}
                 <span style={{fontWeight: "bold"}}>{"5 points"}</span>
                 {
-                  ", cliquez sur une case de rotor et validez pour obtenir sa valeur."
+                  ", cliquez sur une case de substitution et validez pour obtenir sa valeur."
                 }
               </p>
               <div style={{textAlign: "center", margin: "10px 0"}}>
@@ -126,7 +126,7 @@ class Workspace extends React.PureComponent {
 
             <div style={{display: "inline-grid", padding: "10px", border: "1px solid #000", borderLeft: "0", width: "30%", background: "rgb(202, 202, 202)"}}>
               <p style={{fontWeight: "bold", textAlign: "center"}}>{"Indices"}</p>
-              <p>{"Pour un coût de "}<span style={{fontWeight: "bold"}}>{"5 points"}</span>{", cliquez sur une case de rotor et validez pour obtenir sa valeur."}</p>
+              <p>{"Pour un coût de "}<span style={{fontWeight: "bold"}}>{"5 points"}</span>{", cliquez sur une case de substitution et validez pour obtenir sa valeur."}</p>
               <div style={{textAlign: "center", margin: "10px 0"}}>
                 <HintRequestView
                   requestHint={this.requestHint2}

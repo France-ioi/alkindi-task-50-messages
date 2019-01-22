@@ -9,11 +9,11 @@ import './style.css';
 
 import CipheredTextBundle from './ciphered_text_bundle';
 import FrequencyAnalysisBundle from './frequency_analysis_bundle';
-import RotorsBundle from './rotors_bundle';
+import SubstitutionsBundle from './substitutions_bundle';
 import DecipheredTextBundle from './deciphered_text_bundle';
 import MultiMessageBundle from './multi_message_bundle';
 import WorkspaceBundle from './workspace_bundle';
-import {dumpRotors, loadRotors} from './utils';
+import {dumpSubstitutions, loadSubstitutions} from './utils';
 
 const TaskBundle = {
   actionReducers: {
@@ -26,7 +26,7 @@ const TaskBundle = {
   includes: [
     CipheredTextBundle,
     FrequencyAnalysisBundle,
-    RotorsBundle,
+    SubstitutionsBundle,
     DecipheredTextBundle,
     MultiMessageBundle,
     WorkspaceBundle,
@@ -65,41 +65,41 @@ function appInitReducer (state, _action) {
 
 function taskInitReducer (state, _action) {
   const {alphabet, numMessages, hints} = selectTaskData(state);
-  const rotorSpecs = new Array(numMessages).fill([]);
-  const rotors = loadRotors(alphabet,  hints, rotorSpecs);
-  return {...state, rotors, taskReady: true};
+  const substitutionSpecs = new Array(numMessages).fill([]);
+  const substitutions = loadSubstitutions(alphabet,  hints, substitutionSpecs);
+  return {...state, substitutions, taskReady: true};
 }
 
 function taskRefreshReducer (state, _action) {
   const {alphabet, hints} = selectTaskData(state);
-  const dump = dumpRotors(alphabet, state.rotors);
-  const rotors = loadRotors(alphabet, hints, dump);
-  return {...state, rotors};
+  const dump = dumpSubstitutions(alphabet, state.substitutions);
+  const substitutions = loadSubstitutions(alphabet, hints, dump);
+  return {...state, substitutions};
 }
 
 function getTaskAnswer (state) {
   const {taskData: {alphabet}} = state;
   return {
-    rotors: state.rotors.map(rotor => rotor.cells.map(({editable}) => alphabet.indexOf(editable)))
+    substitutions: state.substitutions.map(substitution => substitution.cells.map(({editable}) => alphabet.indexOf(editable)))
   };
 }
 
 function taskAnswerLoaded (state, {payload: {answer}}) {
   const {alphabet, hints} = selectTaskData(state);
-  const rotors = loadRotors(alphabet, hints, answer.rotors);
-  return update(state, {rotors: {$set: rotors}});
+  const substitutions = loadSubstitutions(alphabet, hints, answer.substitutions);
+  return update(state, {substitutions: {$set: substitutions}});
 }
 
 function getTaskState (state) {
   console.log(state);
   const {taskData: {alphabet}} = state;
-  return {rotors: dumpRotors(alphabet, state.rotors)};
+  return {substitutions: dumpSubstitutions(alphabet, state.substitutions)};
 }
 
 function taskStateLoaded (state, {payload: {dump}}) {
   const {alphabet, hints} = selectTaskData(state);
-  const rotors = loadRotors(alphabet, hints, dump.rotors);
-  return update(state, {rotors: {$set: rotors}});
+  const substitutions = loadSubstitutions(alphabet, hints, dump.substitutions);
+  return update(state, {substitutions: {$set: substitutions}});
 }
 
 export function run (container, options) {

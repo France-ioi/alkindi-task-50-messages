@@ -99,10 +99,10 @@ export function updateGridVisibleArea (grid, options) {
   return grid;
 }
 
-/* ROTOR functions */
+/* SUBSTITUTION functions */
 
 
-export function makeRotor (alphabet) {
+export function makeSubstitution (alphabet) {
   const size = alphabet.length;
   const cells = alphabet.split('').map(function (c, rank) {
     return {rank, rotating: c, editable: null, locked: false, conflict: false};
@@ -111,14 +111,14 @@ export function makeRotor (alphabet) {
   return {alphabet, size, cells, forward: nullPerm, backward: nullPerm};
 }
 
-export function dumpRotors (alphabet, rotors) {
-  return rotors.map(rotor =>
-    rotor.cells.map(({editable, locked}) =>
+export function dumpSubstitutions (alphabet, substitutions) {
+  return substitutions.map(substitution =>
+    substitution.cells.map(({editable, locked}) =>
       [alphabet.indexOf(editable), locked ? 1 : 0]));
 }
 
-export function loadRotors (alphabet, hints, rotorDumps) {
-  return rotorDumps.map((cells, rotorIndex) => {
+export function loadSubstitutions (alphabet, hints, substitutionDumps) {
+  return substitutionDumps.map((cells, substitutionIndex) => {
     const $cells = [];
     cells.forEach((cell, cellIndex) => {
       /* Locking information is not included in the answer. */
@@ -130,33 +130,33 @@ export function loadRotors (alphabet, hints, rotorDumps) {
       };
     });
     hints.forEach(({messageIndex: i, cellRank: j, symbol}) => {
-      if (rotorIndex === i) {
+      if (substitutionIndex === i) {
         $cells[j] = {
           editable: {$set: symbol},
           hint: {$set: true},
         };
       }
     });
-    let rotor = makeRotor(alphabet);
-    rotor = update(rotor, {cells: $cells});
-    rotor = markRotorConflicts(updatePerms(rotor));
-    return rotor;
+    let substitution = makeSubstitution(alphabet);
+    substitution = update(substitution, {cells: $cells});
+    substitution = markSubstitutionConflicts(updatePerms(substitution));
+    return substitution;
   });
 }
 
-export function editRotorCell (rotor, rank, symbol) {
-  rotor = update(rotor, {cells: {[rank]: {editable: {$set: symbol}}}});
-  return updatePerms(markRotorConflicts(rotor));
+export function editSubstitutionCell (substitution, rank, symbol) {
+  substitution = update(substitution, {cells: {[rank]: {editable: {$set: symbol}}}});
+  return updatePerms(markSubstitutionConflicts(substitution));
 }
 
-export function lockRotorCell (rotor, rank, locked) {
-  return update(rotor, {cells: {[rank]: {locked: {$set: locked}}}});
+export function lockSubstitutionCell (substitution, rank, locked) {
+  return update(substitution, {cells: {[rank]: {locked: {$set: locked}}}});
 }
 
-function markRotorConflicts (rotor) {
+function markSubstitutionConflicts (substitution) {
   const counts = new Map();
   const changes = {};
-  for (let {rank, editable, conflict} of rotor.cells) {
+  for (let {rank, editable, conflict} of substitution.cells) {
     if (conflict) {
       changes[rank] = {conflict: {$set: false}};
     }
@@ -175,21 +175,21 @@ function markRotorConflicts (rotor) {
       }
     }
   }
-  return update(rotor, {cells: changes});
+  return update(substitution, {cells: changes});
 }
 
-export function updateRotorWithKey (alphabet, rotor, key) {
+export function updateSubstitutionWithKey (alphabet, substitution, key) {
   const $cells = {};
   key.split('').forEach((symbol, cellIndex) => {
     $cells[cellIndex] = {
       editable: {$set: alphabet.indexOf(symbol) === -1 ? null : symbol}
     };
   });
-  return updatePerms(update(rotor, {cells: $cells}));
+  return updatePerms(update(substitution, {cells: $cells}));
 }
 
-export function updatePerms (rotor) {
-  const {size, alphabet, cells} = rotor;
+export function updatePerms (substitution) {
+  const {size, alphabet, cells} = substitution;
   const forward = new Array(size).fill(-1);
   const backward = new Array(size).fill(-1);
   for (let cell of cells) {
@@ -199,12 +199,12 @@ export function updatePerms (rotor) {
       backward[cell.rank] = source;
     }
   }
-  return {...rotor, forward, backward};
+  return {...substitution, forward, backward};
 }
 
-export function applyRotors (rotor, position, rank) {
+export function applySubstitutions (substitution, position, rank) {
   const result = {rank, locks: 0, trace: []};
-  applyRotor(rotor, result);
+  applySubstitution(substitution, result);
 
   return result;
 }
@@ -213,15 +213,15 @@ export function wrapAround (value, mod) {
   return ((value % mod) + mod) % mod;
 }
 
-export function applyRotor (rotor, result) {
+export function applySubstitution (substitution, result) {
   let rank = result.rank, cell;
   /* Positive shift to the static bottom row after permutation. */
 
-  cell = rotor.cells[rank];
-  // rank = applyShift(rotor.size, shift, rank);
+  cell = substitution.cells[rank];
+  // rank = applyShift(substitution.size, shift, rank);
 
   /* Apply the permutation. */
-  rank = rotor.backward[rank];
+  rank = substitution.backward[rank];
   /* Save new rank (can be -1) and attributes. */
   result.rank = rank;
   if (cell) {

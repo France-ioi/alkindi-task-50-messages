@@ -9,7 +9,7 @@
 import React from 'react';
 import {connect} from 'react-redux';
 
-import {updateGridGeometry, updateGridVisibleRows, applyRotors, selectTaskData} from './utils';
+import {updateGridGeometry, updateGridVisibleRows, applySubstitutions, selectTaskData} from './utils';
 
 function appInitReducer (state, _action) {
   return {...state, decipheredText: {
@@ -42,7 +42,7 @@ function decipheredTextScrolledReducer (state, {payload: {scrollTop}}) {
 
 function decipheredTextLateReducer (state, _action) {
   if (!state.taskData) return state;
-  let {rotors, decipheredText, messageIndex} = state;
+  let {substitutions, decipheredText, messageIndex} = state;
   const {alphabet, cipherText} = selectTaskData(state);
   const position = cipherText.length - 1;
 
@@ -53,7 +53,7 @@ function decipheredTextLateReducer (state, _action) {
     if (rank === -1) {
       cell.clear = ciphered;
     } else if (index <= position) {
-      Object.assign(cell, applyRotors(rotors[messageIndex], index, rank));
+      Object.assign(cell, applySubstitutions(substitutions[messageIndex], index, rank));
       if (cell.rank !== -1) {
         cell.clear = alphabet[cell.rank];
       }

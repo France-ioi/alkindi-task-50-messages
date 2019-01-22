@@ -87,7 +87,7 @@ module.exports.gradeAnswer = function (args, task_data, callback) {
     privateData
   } = generateTaskData(args.task);
 
-  let {rotors: submittedKeys} = JSON.parse(args.answer.value);
+  let {substitutions: submittedKeys} = JSON.parse(args.answer.value);
   submittedKeys = submittedKeys.map(cells =>
     cells.map(i => (i === -1 ? " " : alphabet[i])).join("")
   );
@@ -257,7 +257,7 @@ function getHintsRequested (hints_requested) {
 function generateTaskData (task) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const version = parseInt(task.params.version) || 1;
-  const config = versions[version]; // specification of decoding rotors
+  const config = versions[version]; // specification of decoding substitutions
   const messages = [];
   const privateData = [];
   if (process.env.DEV_MODE) {

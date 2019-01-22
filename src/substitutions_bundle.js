@@ -6,75 +6,75 @@ import {range} from 'range';
 import update from 'immutability-helper';
 import {put, select, takeEvery} from 'redux-saga/effects';
 
-import {wrapAround, editRotorCell, lockRotorCell, updateRotorWithKey} from './utils';
+import {wrapAround, editSubstitutionCell, lockSubstitutionCell, updateSubstitutionWithKey} from './utils';
 
 function appInitReducer (state, _action) {
-  return {...state, rotors: [], editing: {}};
+  return {...state, substitutions: [], editing: {}};
 }
 
-function rotorCellEditStartedReducer (state, {payload: {cellRank}}) {
+function substitutionCellEditStartedReducer (state, {payload: {cellRank}}) {
   let {taskData: {alphabet}} = state;
   cellRank = wrapAround(cellRank, alphabet.length);
   return update(state, {editing: {$set: {cellRank}}});
 }
 
-function rotorCellEditMovedReducer (state, {payload: {cellMove}}) {
-  let {taskData: {alphabet}, rotors, messageIndex, editing: {cellRank}} = state;
+function substitutionCellEditMovedReducer (state, {payload: {cellMove}}) {
+  let {taskData: {alphabet}, substitutions, messageIndex, editing: {cellRank}} = state;
   let cellStop = cellRank;
   if (cellRank === undefined) return state;
   let cell;
   do {
     cellRank = wrapAround(cellRank + cellMove, alphabet.length);
-    cell = rotors[messageIndex].cells[cellRank];
+    cell = substitutions[messageIndex].cells[cellRank];
     /* If we looped back to the starting point, the move is impossible. */
     if (cellStop == cellRank) return state;
   } while (cell.hint || cell.locked);
   return update(state, {editing: {$set: {cellRank}}});
 }
 
-function rotorCellEditCancelledReducer (state, _action) {
+function substitutionCellEditCancelledReducer (state, _action) {
   return update(state, {editing: {$set: {}}});
 }
 
-function rotorCellCharChangedReducer (state, {payload: {rank, symbol}}) {
-  let {taskData: {alphabet}, rotors, messageIndex} = state;
+function substitutionCellCharChangedReducer (state, {payload: {rank, symbol}}) {
+  let {taskData: {alphabet}, substitutions, messageIndex} = state;
   if (symbol.length !== 1 || -1 === alphabet.indexOf(symbol)) {
     symbol = null;
   }
-  const rotor = editRotorCell(rotors[messageIndex], rank, symbol);
-  return update(state, {rotors: {[messageIndex]: {$set: rotor}}});
+  const substitution = editSubstitutionCell(substitutions[messageIndex], rank, symbol);
+  return update(state, {substitutions: {[messageIndex]: {$set: substitution}}});
 }
 
-function rotorCellLockChangedReducer (state, {payload: {rank, isLocked}}) {
+function substitutionCellLockChangedReducer (state, {payload: {rank, isLocked}}) {
   const {messageIndex} = state;
-  const rotor = lockRotorCell(state.rotors[messageIndex], rank, isLocked);
-  return update(state, {rotors: {[messageIndex]: {$set: rotor}}});
+  const substitution = lockSubstitutionCell(state.substitutions[messageIndex], rank, isLocked);
+  return update(state, {substitutions: {[messageIndex]: {$set: substitution}}});
 }
 
 // TODO: dead method ?
-function rotorKeyLoadedReducer (state, {payload: {key}}) {
-  const {taskData: {alphabet}, rotors, messageIndex} = state;
-  const rotor = updateRotorWithKey(alphabet, rotors[messageIndex], key);
-  return update(state, {rotors: {[messageIndex]: {$set: rotor}}});
+function substitutionKeyLoadedReducer (state, {payload: {key}}) {
+  const {taskData: {alphabet}, substitutions, messageIndex} = state;
+  const substitution = updateSubstitutionWithKey(alphabet, substitutions[messageIndex], key);
+  return update(state, {substitutions: {[messageIndex]: {$set: substitution}}});
 }
 
-function RotorSelector (state, {index}) {
+function SubstitutionSelector (state, {index}) {
   const {
     actions: {
-      rotorCellLockChanged, rotorCellCharChanged,
-      rotorCellEditCancelled, rotorCellEditStarted, rotorCellEditMoved
+      substitutionCellLockChanged, substitutionCellCharChanged,
+      substitutionCellEditCancelled, substitutionCellEditStarted, substitutionCellEditMoved
     },
-    rotors, editing
+    substitutions, editing
   } = state;
-  const {cells} = rotors[index];
+  const {cells} = substitutions[index];
   return {
-    rotorCellEditStarted, rotorCellEditCancelled, rotorCellEditMoved,
-    rotorCellLockChanged, rotorCellCharChanged,
+    substitutionCellEditStarted, substitutionCellEditCancelled, substitutionCellEditMoved,
+    substitutionCellLockChanged, substitutionCellCharChanged,
     cells, editingRank: editing.cellRank
   };
 }
 
-class RotorView extends React.PureComponent {
+class SubstitutionView extends React.PureComponent {
   render () {
     const {cells, editingRank} = this.props;
     const nbCells = cells.length;
@@ -89,7 +89,7 @@ class RotorView extends React.PureComponent {
             const shiftedIndex = (rank) % nbCells;
             const {rotating} = cells[shiftedIndex];
             return (
-              <RotorCell key={rank} rank={rank} isLast={isLast}
+              <SubstitutionCell key={rank} rank={rank} isLast={isLast}
                 staticChar={rotating} editableChar={editable} isLocked={locked} isHint={hint} isEditing={isEditing} isActive={isActive}
                 onChangeChar={this.onChangeChar} onChangeLocked={this.onChangeLocked}
                 onEditingStarted={this.onEditingStarted} onEditingCancelled={this.onEditingCancelled}
@@ -100,24 +100,24 @@ class RotorView extends React.PureComponent {
     );
   }
   onEditingStarted = (rank) => {
-    this.props.dispatch({type: this.props.rotorCellEditStarted, payload: {rotorIndex: this.props.index, cellRank: rank}});
+    this.props.dispatch({type: this.props.substitutionCellEditStarted, payload: {substitutionIndex: this.props.index, cellRank: rank}});
   };
   onEditingCancelled = () => {
-    this.props.dispatch({type: this.props.rotorCellEditCancelled});
+    this.props.dispatch({type: this.props.substitutionCellEditCancelled});
   };
   onChangeChar = (rank, symbol) => {
     symbol = symbol.toUpperCase();
-    this.props.dispatch({type: this.props.rotorCellCharChanged, payload: {rotorIndex: this.props.index, rank, symbol}});
+    this.props.dispatch({type: this.props.substitutionCellCharChanged, payload: {substitutionIndex: this.props.index, rank, symbol}});
   };
   onChangeLocked = (rank, isLocked) => {
-    this.props.dispatch({type: this.props.rotorCellLockChanged, payload: {rotorIndex: this.props.index, rank, isLocked}});
+    this.props.dispatch({type: this.props.substitutionCellLockChanged, payload: {substitutionIndex: this.props.index, rank, isLocked}});
   };
-  editingMoved = (rotorMove, cellMove) => {
-    this.props.dispatch({type: this.props.rotorCellEditMoved, payload: {rotorMove, cellMove}});
+  editingMoved = (substitutionMove, cellMove) => {
+    this.props.dispatch({type: this.props.substitutionCellEditMoved, payload: {substitutionMove, cellMove}});
   };
 }
 
-class RotorCell extends React.PureComponent {
+class SubstitutionCell extends React.PureComponent {
   /* XXX Clicking in the editable div and entering the same letter does not
          trigger a change event.  This behavior is unfortunate. */
   render () {
@@ -216,29 +216,29 @@ class RotorCell extends React.PureComponent {
 
 export default {
   actions: {
-    rotorCellEditStarted: 'Rotor.Cell.Edit.Started',
-    rotorCellEditMoved: 'Rotor.Cell.Edit.Moved',
-    rotorCellEditCancelled: 'Rotor.Cell.Edit.Cancelled',
-    rotorCellLockChanged: 'Rotor.Cell.Lock.Changed',
-    rotorCellCharChanged: 'Rotor.Cell.Char.Changed',
-    rotorKeyLoaded: 'Rotor.Key.Loaded',
+    substitutionCellEditStarted: 'Substitution.Cell.Edit.Started',
+    substitutionCellEditMoved: 'Substitution.Cell.Edit.Moved',
+    substitutionCellEditCancelled: 'Substitution.Cell.Edit.Cancelled',
+    substitutionCellLockChanged: 'Substitution.Cell.Lock.Changed',
+    substitutionCellCharChanged: 'Substitution.Cell.Char.Changed',
+    substitutionKeyLoaded: 'Substitution.Key.Loaded',
   },
   actionReducers: {
     appInit: appInitReducer,
-    rotorCellEditStarted: rotorCellEditStartedReducer,
-    rotorCellEditMoved: rotorCellEditMovedReducer,
-    rotorCellEditCancelled: rotorCellEditCancelledReducer,
-    rotorCellLockChanged: rotorCellLockChangedReducer,
-    rotorCellCharChanged: rotorCellCharChangedReducer,
-    rotorKeyLoaded: rotorKeyLoadedReducer,
+    substitutionCellEditStarted: substitutionCellEditStartedReducer,
+    substitutionCellEditMoved: substitutionCellEditMovedReducer,
+    substitutionCellEditCancelled: substitutionCellEditCancelledReducer,
+    substitutionCellLockChanged: substitutionCellLockChangedReducer,
+    substitutionCellCharChanged: substitutionCellCharChangedReducer,
+    substitutionKeyLoaded: substitutionKeyLoadedReducer,
   },
   saga: function* () {
     const actions = yield select(({actions}) => actions);
-    yield takeEvery(actions.rotorCellEditStarted, function* () {
+    yield takeEvery(actions.substitutionCellEditStarted, function* () {
       yield put({type: actions.hintRequestFeedbackCleared});
     });
   },
   views: {
-    Rotor: connect(RotorSelector)(RotorView)
+    Substitution: connect(SubstitutionSelector)(SubstitutionView)
   }
 };
