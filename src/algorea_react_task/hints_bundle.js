@@ -2,19 +2,51 @@
 import React from 'react';
 import {Alert} from 'react-bootstrap';
 import {connect} from 'react-redux';
-import {call, put, select, takeEvery} from 'redux-saga/effects';
 import update from 'immutability-helper';
+import {call, put, select, takeEvery} from 'redux-saga/effects';
 
 function hintRequestFulfilledReducer (state, _action) {
-    return {...state, hintRequest: {success: true}};
+    return update(state, {
+        hintRequest: {
+            data: {$set: {success: true}},
+            isActive: {$set: false},
+        }
+    });
 }
 
 function hintRequestRejectedReducer (state, {payload: {code, error}}) {
-    return {...state, hintRequest: {success: false, code, error}};
+    return update(state, {
+        hintRequest: {
+            data: {$set: {success: false, code, error}},
+            isActive: {$set: false},
+        }
+    });
 }
 
 function hintRequestFeedbackClearedReducer (state, _action) {
-    return {...state, hintRequest: false};
+    return update(state, {
+        hintRequest: {
+            data: {$set: null},
+            isActive: {$set: false},
+        }
+    });
+}
+
+function hintRequestActivatedReducer (state, _action) {
+    return update(state, {
+        hintRequest: {
+            isActive: {$set: true},
+        }
+    });
+}
+
+function appInitReducer (state, _action) {
+    return update(state, {
+        hintRequest: {$set: {
+            data: null,
+            isActive: false,
+        }}
+    });
 }
 
 function* requestHintSaga ({payload: {request}}) {
@@ -23,6 +55,7 @@ function* requestHintSaga ({payload: {request}}) {
     try {
         const {actions, taskToken: initialTaskToken, serverApi} = yield select(state => state);
         code = 10;
+        yield put({type: actions.hintRequestActivated, payload: {}});
         const {askHint} = yield select(state => state.platformApi);
         code = 20;
         /* Contact serverApi to obtain a hintToken for the requested hint. */
@@ -47,9 +80,9 @@ function* requestHintSaga ({payload: {request}}) {
 
 function HintRequestFeedbackSelector (state) {
     const {actions, hintRequest} = state;
-    if (!hintRequest) return {};
+    if (!hintRequest.data) return {};
     const {hintRequestFeedbackCleared} = actions;
-    const {success, code, error} = hintRequest;
+    const {success, code, error} = hintRequest.data;
     return {visible: true, success, code, error, hintRequestFeedbackCleared};
 }
 
@@ -83,14 +116,17 @@ class HintRequestFeedback extends React.PureComponent {
 export default {
     actions: {
         requestHint: 'Hint.Request',
+        hintRequestActivated: 'Hint.Request.Activated',
         hintRequestFulfilled: 'Hint.Request.Fulfilled',
         hintRequestRejected: 'Hint.Request.Rejected',
         hintRequestFeedbackCleared: 'Hint.Request.FeedbackCleared',
     },
     actionReducers: {
+        taskInit: appInitReducer,
         hintRequestFulfilled: hintRequestFulfilledReducer,
         hintRequestRejected: hintRequestRejectedReducer,
         hintRequestFeedbackCleared: hintRequestFeedbackClearedReducer,
+        hintRequestActivated: hintRequestActivatedReducer,
     },
     views: {
         HintRequestFeedback: connect(HintRequestFeedbackSelector)(HintRequestFeedback)
