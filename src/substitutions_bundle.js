@@ -6,7 +6,7 @@ import {range} from 'range';
 import update from 'immutability-helper';
 import {put, select, takeEvery} from 'redux-saga/effects';
 
-import {wrapAround, editSubstitutionCell, lockSubstitutionCell, updateSubstitutionWithKey} from './utils';
+import {wrapAround, editSubstitutionCell, lockSubstitutionCell, /*updateSubstitutionWithKey*/ } from './utils';
 
 function appInitReducer (state, _action) {
   return {...state, substitutions: [], editing: {}};
@@ -52,11 +52,11 @@ function substitutionCellLockChangedReducer (state, {payload: {rank, isLocked}})
 }
 
 // TODO: dead method ?
-function substitutionKeyLoadedReducer (state, {payload: {key}}) {
-  const {taskData: {alphabet}, substitutions, messageIndex} = state;
-  const substitution = updateSubstitutionWithKey(alphabet, substitutions[messageIndex], key);
-  return update(state, {substitutions: {[messageIndex]: {$set: substitution}}});
-}
+// function substitutionKeyLoadedReducer (state, {payload: {key}}) {
+//   const {taskData: {alphabet}, substitutions, messageIndex} = state;
+//   const substitution = updateSubstitutionWithKey(alphabet, substitutions[messageIndex], key);
+//   return update(state, {substitutions: {[messageIndex]: {$set: substitution}}});
+// }
 
 function SubstitutionSelector (state, {index}) {
   const {
@@ -230,7 +230,7 @@ export default {
     substitutionCellEditCancelled: substitutionCellEditCancelledReducer,
     substitutionCellLockChanged: substitutionCellLockChangedReducer,
     substitutionCellCharChanged: substitutionCellCharChangedReducer,
-    substitutionKeyLoaded: substitutionKeyLoadedReducer,
+    // substitutionKeyLoaded: substitutionKeyLoadedReducer,
   },
   saga: function* () {
     const actions = yield select(({actions}) => actions);

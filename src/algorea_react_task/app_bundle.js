@@ -10,6 +10,7 @@ import makeServerApi from './server_api';
 import makePlatformAdapter from './legacy/platform_adapter';
 import PlatformBundle from './platform_bundle';
 import HintsBundle from './hints_bundle';
+
 import {windowHeightMonitorSaga} from './window_height_monitor';
 
 function appInitReducer (state, {payload: {taskToken, options}}) {

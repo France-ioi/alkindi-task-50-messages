@@ -53,7 +53,7 @@ function decipheredTextLateReducer (state, _action) {
     if (rank === -1) {
       cell.clear = ciphered;
     } else if (index <= position) {
-      Object.assign(cell, applySubstitutions(substitutions[messageIndex], index, rank));
+      Object.assign(cell, applySubstitutions(substitutions, messageIndex, rank));
       if (cell.rank !== -1) {
         cell.clear = alphabet[cell.rank];
       }

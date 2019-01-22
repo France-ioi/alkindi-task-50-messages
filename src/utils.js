@@ -178,34 +178,31 @@ function markSubstitutionConflicts (substitution) {
   return update(substitution, {cells: changes});
 }
 
-export function updateSubstitutionWithKey (alphabet, substitution, key) {
-  const $cells = {};
-  key.split('').forEach((symbol, cellIndex) => {
-    $cells[cellIndex] = {
-      editable: {$set: alphabet.indexOf(symbol) === -1 ? null : symbol}
-    };
-  });
-  return updatePerms(update(substitution, {cells: $cells}));
-}
+// export function updateSubstitutionWithKey (alphabet, substitution, key) {
+//   const $cells = {};
+//   key.split('').forEach((symbol, cellIndex) => {
+//     $cells[cellIndex] = {
+//       editable: {$set: alphabet.indexOf(symbol) === -1 ? null : symbol}
+//     };
+//   });
+//   return updatePerms(update(substitution, {cells: $cells}));
+// }
 
 export function updatePerms (substitution) {
   const {size, alphabet, cells} = substitution;
-  const forward = new Array(size).fill(-1);
   const backward = new Array(size).fill(-1);
   for (let cell of cells) {
     if (cell.editable !== null && !cell.conflict) {
       const source = alphabet.indexOf(cell.editable);
-      forward[source] = cell.rank;
       backward[cell.rank] = source;
     }
   }
-  return {...substitution, forward, backward};
+  return {...substitution, backward};
 }
 
-export function applySubstitutions (substitution, position, rank) {
+export function applySubstitutions (substitutions, position, rank) {
   const result = {rank, locks: 0, trace: []};
-  applySubstitution(substitution, result);
-
+  applySubstitution(substitutions[position], result);
   return result;
 }
 
@@ -215,14 +212,8 @@ export function wrapAround (value, mod) {
 
 export function applySubstitution (substitution, result) {
   let rank = result.rank, cell;
-  /* Positive shift to the static bottom row after permutation. */
-
   cell = substitution.cells[rank];
-  // rank = applyShift(substitution.size, shift, rank);
-
-  /* Apply the permutation. */
   rank = substitution.backward[rank];
-  /* Save new rank (can be -1) and attributes. */
   result.rank = rank;
   if (cell) {
     result.trace.push(cell);
