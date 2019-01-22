@@ -12,6 +12,7 @@ import FrequencyAnalysisBundle from './frequency_analysis_bundle';
 import SubstitutionsBundle from './substitutions_bundle';
 import DecipheredTextBundle from './deciphered_text_bundle';
 import MultiMessageBundle from './multi_message_bundle';
+import HintsBundle from './hints_bundle';
 import WorkspaceBundle from './workspace_bundle';
 import {dumpSubstitutions, loadSubstitutions} from './utils';
 
@@ -30,6 +31,7 @@ const TaskBundle = {
     DecipheredTextBundle,
     MultiMessageBundle,
     WorkspaceBundle,
+    HintsBundle,
   ],
   selectors: {
     getTaskState,
