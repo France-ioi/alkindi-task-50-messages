@@ -2,7 +2,7 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import {range} from 'range';
-import seedrandom from 'seedrandom';
+import {selectTaskData} from './utils';
 
 function appInitReducer (state, _action) {
   return {...state, frequencyAnalysis: {}};
@@ -10,13 +10,14 @@ function appInitReducer (state, _action) {
 
 function frequencyAnalysisLateReducer (state) {
   if (state.frequencyAnalysis && state.taskData) {
-    let {taskData: {alphabet, referenceFrequencies, frequencies, cipherText}, frequencyAnalysis} = state;
+    const {alphabet, cipherText} = selectTaskData(state);
+    let {frequencyAnalysis} = state;
     let textFrequencies = [];
     if (cipherText && alphabet) {
       const freqMap = new Map(alphabet.split('').map(c => [c, 0]));
       countSymbols(freqMap, cipherText, 0, cipherText.length-1);
       textFrequencies = normalizeAndSortFrequencies(freqMap.entries());
-    } 
+    }
     frequencyAnalysis = {...frequencyAnalysis, textFrequencies};
     state = {...state, frequencyAnalysis};
   }
@@ -36,11 +37,6 @@ function countSymbol (map, char) {
   }
 }
 
-function sumFrequencies (dst, add) {
-  for (let i = 0; i < dst.length; i += 1) {
-    dst[i] += add[i];
-  }
-}
 
 function normalizeAndSortFrequencies (entries) {
   const result = Array.from(entries);

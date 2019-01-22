@@ -16,7 +16,9 @@ module.exports.generate = function (rng, minLength, maxLength, withSpaces) {
    }
    var iLastSentence = Math.trunc(rng() * sentences.length);
    for (var iDelta = 0; iDelta < sentences.length; iDelta++) {
+      // eslint-disable-next-line
       var iSentence = (iLastSentence + iDelta) % sentences.length;
+      // eslint-disable-next-line
       var sentence = cleanUpSpecialChars(sentences[iSentence], withSpaces);
       var newLength = curLength + sentence.length;
       if ((newLength >= minLength) && (newLength <= maxLength)) {
@@ -24,11 +26,13 @@ module.exports.generate = function (rng, minLength, maxLength, withSpaces) {
          return text;
       }
    }
+
+   // eslint-disable-next-line
    console.log("Error : unable to generate sentences of correct length");
    return text;
-}
+};
 
-function cleanUpSpecialChars(str, withSpaces) {
+function cleanUpSpecialChars (str, withSpaces) {
     str = str.replace(/[ÀÁÂÃÄÅ]/g,"A");
     str = str.replace(/[àáâãäå]/g,"a");
     str = str.replace(/[ÈÉÊË]/g,"E");

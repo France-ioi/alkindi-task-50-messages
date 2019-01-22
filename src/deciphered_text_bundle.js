@@ -9,7 +9,7 @@
 import React from 'react';
 import {connect} from 'react-redux';
 
-import {updateGridGeometry, updateGridVisibleRows, applyRotors} from './utils';
+import {updateGridGeometry, updateGridVisibleRows, applyRotors, selectTaskData} from './utils';
 
 function appInitReducer (state, _action) {
   return {...state, decipheredText: {
@@ -21,7 +21,8 @@ function appInitReducer (state, _action) {
 }
 
 function taskInitReducer (state, _action) {
-  let {decipheredText, taskData: {cipherText}} = state;
+  let {decipheredText} = state;
+  const {cipherText} = selectTaskData(state);
   decipheredText = {...decipheredText, nbCells: cipherText.length};
   return {...state, decipheredText};
 }
@@ -41,15 +42,18 @@ function decipheredTextScrolledReducer (state, {payload: {scrollTop}}) {
 
 function decipheredTextLateReducer (state, _action) {
   if (!state.taskData) return state;
-  let {taskData: {alphabet, cipherText}, scheduling: {position}, rotors, decipheredText} = state;
+  let {rotors, decipheredText, messageIndex} = state;
+  const {alphabet, cipherText} = selectTaskData(state);
+  const position = cipherText.length - 1;
+
   function getCell (index) {
     const ciphered = cipherText[index];
-    const cell = {position: index, current: index === position, ciphered};
+    const cell = {position: index, ciphered};
     let rank = alphabet.indexOf(ciphered);
     if (rank === -1) {
       cell.clear = ciphered;
     } else if (index <= position) {
-      Object.assign(cell, applyRotors(rotors, index, rank));
+      Object.assign(cell, applyRotors(rotors[messageIndex], index, rank));
       if (cell.rank !== -1) {
         cell.clear = alphabet[cell.rank];
       }
@@ -71,42 +75,34 @@ function DecipheredTextViewSelector (state) {
 }
 
 class DecipheredTextView extends React.PureComponent {
-
   render () {
     const {width, height, visibleRows, cellWidth, cellHeight, bottom} = this.props;
     return (
       <div ref={this.refTextBox} onScroll={this.onScroll} style={{position: 'relative', width: width && `${width}px`, height: height && `${height}px`, overflowY: 'scroll'}}>
         {(visibleRows||[]).map(({index, columns}) =>
           <div key={index} style={{position: 'absolute', top: `${index * cellHeight}px`}}>
-            {columns.map(({index, position, ciphered, clear, locked, current}) =>
-              <TextCell key={index} column={index} position={position} ciphered={ciphered} clear={clear} locked={locked} current={current} cellWidth={cellWidth} onJump={this.onJump} />)}
+            {columns.map(({index, position, ciphered, clear, isHint, locked}) =>
+              <TextCell key={index} column={index} position={position} ciphered={ciphered} clear={clear} isHint={isHint}  locked={locked} cellWidth={cellWidth} />)}
           </div>)}
         <div style={{position: 'absolute', top: `${bottom}px`, width: '1px', height: '1px'}}/>
       </div>
     );
   }
-
   refTextBox = (element) => {
     this._textBox = element;
     const width = element.clientWidth;
     const height = element.clientHeight;
     this.props.dispatch({type: this.props.decipheredTextResized, payload: {width, height}});
   };
-
   onScroll = () => {
     const scrollTop = this._textBox.scrollTop;
     this.props.dispatch({type: this.props.decipheredTextScrolled, payload: {scrollTop}});
   };
-
-  onJump = (position) => {
-    this.props.dispatch({type: this.props.schedulingJump, payload: {position}});
-  };
-
 }
 
 class TextCell extends React.PureComponent {
   render () {
-    const {column, ciphered, clear, locked, current, cellWidth} = this.props;
+    const {column, ciphered, clear, isHint, locked, cellWidth} = this.props;
     const cellStyle = {
       position: 'absolute',
       left: `${column * cellWidth}px`,
@@ -114,19 +110,16 @@ class TextCell extends React.PureComponent {
       height: `42px`,
       border: 'solid #777',
       borderWidth: '1px 0',
-      backgroundColor: (locked ? '#ccc' : '#fff'),
+      backgroundColor: (isHint || locked) ? ((locked) ? '#e2e2e2' : '#a2a2a2') : '#fff',
       cursor: 'pointer'
     };
     return (
-      <div style={cellStyle} /* onClick={this._jump} */>
+      <div style={cellStyle}>
         <div style={{width: '100%', height: '20px', borderBottom: '1px solid #ccc', textAlign: 'center'}}>{ciphered || ' '}</div>
         <div style={{width: '100%', height: '20px', textAlign: 'center'}}>{clear || ' '}</div>
       </div>
     );
   }
-  _jump = (_event) => {
-    this.props.onJump(this.props.position);
-  };
 }
 
 export default {

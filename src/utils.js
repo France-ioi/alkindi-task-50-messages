@@ -2,25 +2,31 @@
 import update from 'immutability-helper';
 
 function bisect (a, x) {
-    let lo = 0, hi = a.length, mid;
-    while (lo < hi) {
-        mid = (lo + hi) / 2 | 0;
-        if (x < a[mid]) {
-            hi = mid;
-        } else {
-            lo = mid + 1;
-        }
+  let lo = 0, hi = a.length, mid;
+  while (lo < hi) {
+    mid = (lo + hi) / 2 | 0;
+    if (x < a[mid]) {
+      hi = mid;
+    } else {
+      lo = mid + 1;
     }
-    return lo;
+  }
+  return lo;
+}
+
+export function selectTaskData (state) {
+  const {taskData: {alphabet, config: {numMessages}, messages}, messageIndex} = state;
+  const {cipherText, hints, frequencies} = messages[messageIndex];
+  return {alphabet, numMessages, messageIndex, cipherText, hints, frequencies};
 }
 
 export function changeSelection (values, value, selected) {
-    const index = bisect(values, value);
-    if (selected) {
-        return values[index - 1] === value ? {} : {$splice: [[index, 0, value]]};
-    } else {
-        return values[index - 1] !== value ? {} : {$splice: [[index - 1, 1]]};
-    }
+  const index = bisect(values, value);
+  if (selected) {
+    return values[index - 1] === value ? {} : {$splice: [[index, 0, value]]};
+  } else {
+    return values[index - 1] !== value ? {} : {$splice: [[index - 1, 1]]};
+  }
 }
 
 export function sortedArrayHasElement (a, x) {
@@ -96,13 +102,13 @@ export function updateGridVisibleArea (grid, options) {
 /* ROTOR functions */
 
 
-export function makeRotor (alphabet, {schedule, editableRow}) {
+export function makeRotor (alphabet) {
   const size = alphabet.length;
-  const cells = alphabet.split('') .map(function (c, rank) {
+  const cells = alphabet.split('').map(function (c, rank) {
     return {rank, rotating: c, editable: null, locked: false, conflict: false};
   });
   const nullPerm = new Array(size).fill(-1);
-  return {alphabet, size, schedule, editableRow, cells, forward: nullPerm, backward: nullPerm};
+  return {alphabet, size, cells, forward: nullPerm, backward: nullPerm};
 }
 
 export function dumpRotors (alphabet, rotors) {
@@ -111,7 +117,7 @@ export function dumpRotors (alphabet, rotors) {
       [alphabet.indexOf(editable), locked ? 1 : 0]));
 }
 
-export function loadRotors (alphabet, rotorSpecs, hints, rotorDumps) {
+export function loadRotors (alphabet, hints, rotorDumps) {
   return rotorDumps.map((cells, rotorIndex) => {
     const $cells = [];
     cells.forEach((cell, cellIndex) => {
@@ -123,7 +129,7 @@ export function loadRotors (alphabet, rotorSpecs, hints, rotorDumps) {
         locked: {$set: locked !== 0},
       };
     });
-    hints.forEach(({rotorIndex: i, cellRank: j, symbol}) => {
+    hints.forEach(({messageIndex: i, cellRank: j, symbol}) => {
       if (rotorIndex === i) {
         $cells[j] = {
           editable: {$set: symbol},
@@ -131,7 +137,7 @@ export function loadRotors (alphabet, rotorSpecs, hints, rotorDumps) {
         };
       }
     });
-    let rotor = makeRotor(alphabet, rotorSpecs[rotorIndex]);
+    let rotor = makeRotor(alphabet);
     rotor = update(rotor, {cells: $cells});
     rotor = markRotorConflicts(updatePerms(rotor));
     return rotor;
@@ -196,65 +202,38 @@ export function updatePerms (rotor) {
   return {...rotor, forward, backward};
 }
 
-export function getRotorShift (rotor, position) {
-  const {size, schedule} = rotor;
-  return schedule === 0 ? 0 : Math.floor(position / schedule) % size;
-}
-
-export function applyRotors (rotors, position, rank) {
+export function applyRotors (rotor, position, rank) {
   const result = {rank, locks: 0, trace: []};
-  for (let rotorIndex = 0; rotorIndex < rotors.length; rotorIndex += 1) {
-    const rotor = rotors[rotorIndex];
-    const shift = getRotorShift(rotor, position);
-    applyRotor(rotor, shift, result);
-    if (result.rank === -1) {
-      break;
-    }
-  }
-  if (result.locks === rotors.length) {
-    result.locked = true;
-  }
+  applyRotor(rotor, result);
+
   return result;
 }
 
-export function applyRotor (rotor, shift, result) {
+export function wrapAround (value, mod) {
+  return ((value % mod) + mod) % mod;
+}
+
+export function applyRotor (rotor, result) {
   let rank = result.rank, cell;
-  /* Negative shift to the static top row before permutation. */
-  if (rotor.editableRow === 'bottom') {
-    rank = applyShift(rotor.size, -shift, rank);
-    cell = rotor.cells[rank];
-  }
   /* Positive shift to the static bottom row after permutation. */
-  if (rotor.editableRow === 'top') {
-    cell = rotor.cells[rank];
-    rank = applyShift(rotor.size, shift, rank);
-  }
+
+  cell = rotor.cells[rank];
+  // rank = applyShift(rotor.size, shift, rank);
+
   /* Apply the permutation. */
   rank = rotor.backward[rank];
   /* Save new rank (can be -1) and attributes. */
   result.rank = rank;
   if (cell) {
-    /* Save the rotor cell used in the trace. */
     result.trace.push(cell);
-    if (cell.locked || cell.hint) {
-      result.locks += 1;
+    if (cell.locked) {
+      result.locked = true;
+    }
+    if (cell.hint) {
+      result.isHint = true;
     }
     if (cell.collision) {
       result.collision = true;
     }
   }
-}
-
-function applyShift (mod, amount, rank) {
-  if (rank !== -1) {
-    if (amount < 0) {
-      amount += mod;
-    }
-    rank = (rank + amount) % mod;
-  }
-  return rank;
-}
-
-export function wrapAround (value, mod) {
-  return ((value % mod) + mod) % mod;
 }

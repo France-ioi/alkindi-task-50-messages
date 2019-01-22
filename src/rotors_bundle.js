@@ -4,57 +4,58 @@ import {connect} from 'react-redux';
 import classnames from 'classnames';
 import {range} from 'range';
 import update from 'immutability-helper';
+import {put, select, takeEvery} from 'redux-saga/effects';
 
-import {wrapAround, makeRotor, editRotorCell, lockRotorCell, updateRotorWithKey} from './utils';
+import {wrapAround, editRotorCell, lockRotorCell, updateRotorWithKey} from './utils';
 
 function appInitReducer (state, _action) {
   return {...state, rotors: [], editing: {}};
 }
 
-function rotorCellEditStartedReducer (state, {payload: {rotorIndex, cellRank}}) {
-  let {taskData: {alphabet}, rotors} = state;
-  rotorIndex = wrapAround(rotorIndex, rotors.length);
+function rotorCellEditStartedReducer (state, {payload: {cellRank}}) {
+  let {taskData: {alphabet}} = state;
   cellRank = wrapAround(cellRank, alphabet.length);
-  return update(state, {editing: {$set: {rotorIndex, cellRank}}});
+  return update(state, {editing: {$set: {cellRank}}});
 }
 
-function rotorCellEditMovedReducer (state, {payload: {rotorMove, cellMove}}) {
-  let {taskData: {alphabet}, rotors, editing: {rotorIndex, cellRank}} = state;
-  let rotorStop = rotorIndex, cellStop = cellRank;
-  if (rotorIndex === undefined || cellRank === undefined) return state;
+function rotorCellEditMovedReducer (state, {payload: {cellMove}}) {
+  let {taskData: {alphabet}, rotors, messageIndex, editing: {cellRank}} = state;
+  let cellStop = cellRank;
+  if (cellRank === undefined) return state;
   let cell;
   do {
-    rotorIndex = wrapAround(rotorIndex + rotorMove, rotors.length);
     cellRank = wrapAround(cellRank + cellMove, alphabet.length);
-    cell = rotors[rotorIndex].cells[cellRank];
+    cell = rotors[messageIndex].cells[cellRank];
     /* If we looped back to the starting point, the move is impossible. */
-    if (/* rotorStop == rotorIndex || */ cellStop == cellRank) return state;
+    if (cellStop == cellRank) return state;
   } while (cell.hint || cell.locked);
-  return update(state, {editing: {$set: {rotorIndex, cellRank}}});
+  return update(state, {editing: {$set: {cellRank}}});
 }
 
 function rotorCellEditCancelledReducer (state, _action) {
   return update(state, {editing: {$set: {}}});
 }
 
-function rotorCellCharChangedReducer (state, {payload: {rotorIndex, rank, symbol}}) {
-  let {taskData: {alphabet}, rotors} = state;
+function rotorCellCharChangedReducer (state, {payload: {rank, symbol}}) {
+  let {taskData: {alphabet}, rotors, messageIndex} = state;
   if (symbol.length !== 1 || -1 === alphabet.indexOf(symbol)) {
     symbol = null;
   }
-  const rotor = editRotorCell(rotors[rotorIndex], rank, symbol);
-  return update(state, {rotors: {[rotorIndex]: {$set: rotor}}});
+  const rotor = editRotorCell(rotors[messageIndex], rank, symbol);
+  return update(state, {rotors: {[messageIndex]: {$set: rotor}}});
 }
 
-function rotorCellLockChangedReducer (state, {payload: {rotorIndex, rank, isLocked}}) {
-  const rotor = lockRotorCell(state.rotors[rotorIndex], rank, isLocked);
-  return update(state, {rotors: {[rotorIndex]: {$set: rotor}}});
+function rotorCellLockChangedReducer (state, {payload: {rank, isLocked}}) {
+  const {messageIndex} = state;
+  const rotor = lockRotorCell(state.rotors[messageIndex], rank, isLocked);
+  return update(state, {rotors: {[messageIndex]: {$set: rotor}}});
 }
 
-function rotorKeyLoadedReducer (state, {payload: {rotorIndex, key}}) {
-  const {taskData: {alphabet}, rotors} = state;
-  const rotor = updateRotorWithKey(alphabet, rotors[rotorIndex], key);
-  return update(state, {rotors: {[rotorIndex]: {$set: rotor}}});
+// TODO: dead method ?
+function rotorKeyLoadedReducer (state, {payload: {key}}) {
+  const {taskData: {alphabet}, rotors, messageIndex} = state;
+  const rotor = updateRotorWithKey(alphabet, rotors[messageIndex], key);
+  return update(state, {rotors: {[messageIndex]: {$set: rotor}}});
 }
 
 function RotorSelector (state, {index}) {
@@ -63,22 +64,19 @@ function RotorSelector (state, {index}) {
       rotorCellLockChanged, rotorCellCharChanged,
       rotorCellEditCancelled, rotorCellEditStarted, rotorCellEditMoved
     },
-    rotors, scheduling: {shifts, currentTrace}, editing
+    rotors, editing
   } = state;
-  const {editableRow, cells} = rotors[index];
-  const shift = shifts[index];
-  const activeRank = currentTrace[index] && currentTrace[index].rank;
-  const editingRank = editing.rotorIndex === index ? editing.cellRank : null;
+  const {cells} = rotors[index];
   return {
     rotorCellEditStarted, rotorCellEditCancelled, rotorCellEditMoved,
     rotorCellLockChanged, rotorCellCharChanged,
-    editableRow, cells, shift, editingRank, activeRank
+    cells, editingRank: editing.cellRank
   };
 }
 
 class RotorView extends React.PureComponent {
   render () {
-    const {index, editableRow, cells, shift, editingRank, activeRank} = this.props;
+    const {cells, editingRank} = this.props;
     const nbCells = cells.length;
     return (
       <div style={{width: "100%"}}>
@@ -88,10 +86,10 @@ class RotorView extends React.PureComponent {
             const isActive = false;
             const isEditing = editingRank === rank && !locked && !hint;
             const isLast = nbCells === rank + 1;
-            const shiftedIndex = (rank + shift) % nbCells;
+            const shiftedIndex = (rank) % nbCells;
             const {rotating} = cells[shiftedIndex];
             return (
-              <RotorCell key={rank} rank={rank} isLast={isLast} editableRow={editableRow}
+              <RotorCell key={rank} rank={rank} isLast={isLast}
                 staticChar={rotating} editableChar={editable} isLocked={locked} isHint={hint} isEditing={isEditing} isActive={isActive}
                 onChangeChar={this.onChangeChar} onChangeLocked={this.onChangeLocked}
                 onEditingStarted={this.onEditingStarted} onEditingCancelled={this.onEditingCancelled}
@@ -123,7 +121,7 @@ class RotorCell extends React.PureComponent {
   /* XXX Clicking in the editable div and entering the same letter does not
          trigger a change event.  This behavior is unfortunate. */
   render () {
-    const {staticChar, editableChar, isLocked, isHint, isActive, isEditing, editableRow, isLast, isConflict} = this.props;
+    const {staticChar, editableChar, isLocked, isHint, isActive, isEditing, isLast, isConflict} = this.props;
     const columnStyle = {
       float: 'left',
       width: '20px',
@@ -141,7 +139,7 @@ class RotorCell extends React.PureComponent {
       backgroundColor: isHint ? '#afa' : (isConflict ? '#fcc' : '#fff')
     };
     /* Apply active-status separation border style. */
-    const bottomCellStyle = editableRow === 'top' ? staticCellStyle : editableCellStyle;
+    const bottomCellStyle = staticCellStyle;
     if (isActive) {
       bottomCellStyle.marginTop = '0';
       bottomCellStyle.borderTopWidth = '3px';
@@ -158,7 +156,7 @@ class RotorCell extends React.PureComponent {
       <div style={editableCellStyle} onClick={this.startEditing}>
         {isEditing
           ? <input ref={this.refInput} onChange={this.cellChanged} onKeyDown={this.keyDown}
-              type='text' value={editableChar||''} style={{width: '19px', height: '20px', border: 'none', textAlign: 'center'}} />
+            type='text' value={editableChar || ''} style={{width: '19px', height: '20px', border: 'none', textAlign: 'center'}} />
           : (editableChar || '\u00A0')}
       </div>
     );
@@ -167,19 +165,11 @@ class RotorCell extends React.PureComponent {
         {isHint || <i className={classnames(['fa', isLocked ? 'fa-lock' : 'fa-unlock-alt'])} />}
       </div>
     );
-    if (editableRow === 'top') {
-      return (
-        <div style={columnStyle}>
-          {staticCell}{editableCell}{lock}
-        </div>
-      );
-    } else {
-      return (
-        <div style={columnStyle}>
-          {staticCell}{editableCell}{lock}
-        </div>
-      );
-    }
+    return (
+      <div style={columnStyle}>
+        {staticCell}{editableCell}{lock}
+      </div>
+    );
   }
   componentDidUpdate () {
     if (this._input) {
@@ -241,6 +231,12 @@ export default {
     rotorCellLockChanged: rotorCellLockChangedReducer,
     rotorCellCharChanged: rotorCellCharChangedReducer,
     rotorKeyLoaded: rotorKeyLoadedReducer,
+  },
+  saga: function* () {
+    const actions = yield select(({actions}) => actions);
+    yield takeEvery(actions.rotorCellEditStarted, function* () {
+      yield put({type: actions.hintRequestFeedbackCleared});
+    });
   },
   views: {
     Rotor: connect(RotorSelector)(RotorView)
