@@ -6,13 +6,13 @@ import {selectTaskData} from './utils';
 function WorkspaceSelector (state) {
   const {numMessages} = selectTaskData(state);
   const {
-    views: {CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints},
+    views: {CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints, Search},
     taskData: {config: {showSearchTool}},
     messageIndex
   } = state;
 
   return {
-    CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints,
+    CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints, Search,
     messageIndex, numMessages, showSearchTool
   };
 }
@@ -20,7 +20,7 @@ function WorkspaceSelector (state) {
 class Workspace extends React.PureComponent {
   render () {
     const {
-      CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints,
+      CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints, Search,
       messageIndex, numMessages, showSearchTool,
     } = this.props;
     return (
@@ -30,9 +30,9 @@ class Workspace extends React.PureComponent {
         <h2>{"Message chiffré"}</h2>
         <CipheredText />
         {showSearchTool && (
-          <div>
+          <div style={{margin: "5px auto"}}>
             <h2>Search Tool</h2>
-            <p>seach tool is visible</p>
+            <Search />
           </div>
         )}
         <h2>{"Analyse de fréquence de la sélection"}</h2>

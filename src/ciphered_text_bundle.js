@@ -1,5 +1,4 @@
 import React from 'react';
-
 import {connect} from 'react-redux';
 
 import {updateGridGeometry, updateGridVisibleRows, selectTaskData} from './utils';
@@ -55,10 +54,10 @@ function cipheredTextScrolledReducer (state, {payload: {scrollTop}}) {
 function CipherTextViewSelector (state) {
   const {actions, cipheredText} = state;
   const {cipheredTextResized, cipheredTextScrolled} = actions;
-  const {width, height, cellWidth, cellHeight, bottom, pageRows, pageColumns, visible} = cipheredText;
+  const {width, height, cellWidth, cellHeight, bottom, pageRows, pageColumns, visible, scrollTop} = cipheredText;
   return {
     cipheredTextResized, cipheredTextScrolled,
-    width, height, visibleRows: visible.rows, cellWidth, cellHeight, bottom, pageRows, pageColumns
+    width, height, visibleRows: visible.rows, cellWidth, cellHeight, bottom, pageRows, pageColumns, scrollTop
   };
 }
 
@@ -69,9 +68,9 @@ class CipherTextView extends React.PureComponent {
       <div>
         <div ref={this.refTextBox} onScroll={this.onScroll} style={{position: 'relative', width: width && `${width}px`, height: height && `${height}px`, overflowY: 'scroll'}}>
           {(visibleRows || []).map(({index, columns}) =>
-            <div key={index} style={{position: 'absolute', top: `${index * cellHeight}px`}}>
-              {columns.map(({index, cell}) =>
-                <span key={index} style={{position: 'absolute', left: `${index * cellWidth}px`, width: `${cellWidth}px`, height: `${cellHeight}px`}}>
+            <div key={index} style={{position: 'absolute', top: `${index * cellHeight}px`, textAlign: 'center'}}>
+              {columns.map(({index, cell, colorClass='', borderClass=''}) =>
+                <span key={index} className={`${borderClass} ${colorClass}`} style={{position: 'absolute', left: `${index * cellWidth}px`, width: `${cellWidth}px`, height: `${cellHeight}px`/*, backgroundColor: color || "#fff"*/}}>
                   {cell || ' '}
                 </span>)}
             </div>)}
@@ -90,6 +89,9 @@ class CipherTextView extends React.PureComponent {
     const scrollTop = this._textBox.scrollTop;
     this.props.dispatch({type: this.props.cipheredTextScrolled, payload: {scrollTop}});
   };
+  componentDidUpdate () {
+    this._textBox.scrollTop = this.props.scrollTop;
+  }
 }
 
 export default {
