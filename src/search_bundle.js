@@ -164,13 +164,12 @@ class SearchToolView extends React.PureComponent {
   findNext = () => {
     const {searchInfo: {isActive, results, highlightFocus}} = this.props;
     if (isActive) {
-      if (results.length > 0 && highlightFocus < results.length) {
+      if (results.length > 0 && highlightFocus + 1 < results.length) {
         this.props.dispatch({type: this.props.searchHighlightFocusChanged, payload: {highlightFocus: highlightFocus + 1}});
       }
     } else {
       this.searchForPatterns();
       this.props.dispatch({type: this.props.searchHighlightFocusChanged, payload: {highlightFocus: 0}});
-
     }
   }
 
@@ -192,12 +191,12 @@ class SearchToolView extends React.PureComponent {
           <input type="text" className="pattern" value={pattern} onChange={this.searchPatternChange} />
         </div>
         <div className="note">
-          <div style={{width: "40%"}}>
+          <div style={{width: "50%"}}>
             a,b,c and d each represent a symbol, always the same.<br />
             each ? may represent any symbol <br />
             each * may represent any sequence of symbols
           </div>
-          <div style={{width: "40%"}}>
+          <div style={{width: "30%"}}>
             {isActive && (<label style={{float: "right"}}  className="occurrences">{numResults} occurence found</label>)}
             {(isActive && numResults > 0) && (<p style={{float: "right", clear: 'both'}} >current match: {highlightFocus + 1}</p>)}
           </div>
