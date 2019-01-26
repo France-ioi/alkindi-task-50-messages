@@ -40,7 +40,7 @@ function taskInitReducer (state, _action) {
 }
 
 function taskRefreshReducer (state) {
-  return {...state, ...defaultState};
+  return {...state, search: {...defaultState.search, pattern: state.search.pattern}};
 }
 
 function searchIsActiveChangedReducer (state, {payload: {isActive}}) {
