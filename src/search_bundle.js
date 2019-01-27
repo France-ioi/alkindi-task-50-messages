@@ -182,13 +182,23 @@ class SearchToolView extends React.PureComponent {
     }
   }
 
+  onKeyPress = (e) => {
+    if (e.key === "Enter") {
+      if (e.shiftKey) {
+        this.findPrevious();
+      } else {
+        this.findNext();
+      }
+    }
+  };
+
   render () {
     const {searchInfo: {pattern, highlightFocus, isActive, numResults}} = this.props;
     return (
       <div className="search">
         <div className="search-box">
           <label className="title">Pattern: </label>
-          <input type="text" className="pattern" value={pattern} onChange={this.searchPatternChange} />
+          <input type="text" className="pattern" value={pattern} onChange={this.searchPatternChange} onKeyPress={this.onKeyPress} />
         </div>
         <div className="note">
           <div style={{width: "50%"}}>
