@@ -249,10 +249,6 @@ export function patternToRegex (pattern) {
   const transformer = [];
 
   for (let index = 0; index < pattern.length; index++) {
-    // can't start with *
-    if (index === 0, pattern[0] === "*") {
-      continue;
-    }
     const curChar = pattern[index];
     switch (curChar) {
       case '?': {
