@@ -139,7 +139,7 @@ function SearchToolViewSelector (state) {
 class SearchToolView extends React.PureComponent {
 
   searchPatternChange = (e) => {
-    const pattern = e.target.value.replace(/[^abcd?*]/, '');
+    const pattern = e.target.value.replace(/[^abcd?*]|\*(?=\*)/, '');
     if (pattern.length > 50) {
       return;
     }
