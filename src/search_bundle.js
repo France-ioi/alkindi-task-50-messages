@@ -4,7 +4,7 @@ import {connect} from 'react-redux';
 import update from 'immutability-helper';
 import {Button} from 'react-bootstrap';
 
-import {selectTaskData, patternToRegex, regexSearch, getStartEndIndex, calulateHighlightIndexes} from './utils';
+import {selectTaskData, patternToRegex, regexSearch, getStartEndOfVisibleRows, calulateHighlightIndexes} from './utils';
 import {takeEvery} from 'redux-saga';
 import {select, put} from 'redux-saga/effects';
 
@@ -13,8 +13,10 @@ const defaultState = {
     isActive: false,
     pattern: '',
     results: [],
+    replacer: () => '',
     numResults: 0,
-    highlightFocus: 0
+    highlightFocus: 0,
+    highlightFocusData: []
   }
 };
 
@@ -54,21 +56,22 @@ function searchHighlightFocusChangedReducer (state, {payload: {highlightFocus}})
   return update(state, {search: {highlightFocus: {$set: highlightFocus}}});
 }
 
-function searchResultsChangedReducer (state, {payload: {results, numResults}}) {
-  return update(state, {search: {results: {$set: results}, numResults: {$set: numResults}}});
+function searchResultsChangedReducer (state, {payload: {results, replacer, numResults}}) {
+  return update(state, {search: {results: {$set: results}, replacer: {$set: replacer}, numResults: {$set: numResults}}});
+}
+
+function searchHighlightFocusDataChangedReducer (state, {payload: {highlightFocusData}}) {
+  return update(state, {search: {highlightFocusData: {$set: highlightFocusData}}});
 }
 
 function searchLateReducer (state) {
   if (state.cipheredText === undefined || state.cipheredText.visible === undefined) return state;
-  if (state.search === undefined || state.search.results === undefined) return state;
-  const {cipheredText, search: {pattern, isActive, highlightFocus, results}} = state;
-  const {visible: {rows}, scrollTop} = cipheredText;
-  if (rows === undefined || results.length === 0 || rows.length === 0 || typeof scrollTop !== 'number') return state;
-  let focusStart, focusEnd, colors, match = results[highlightFocus];
-  if (match) {
-    [focusStart, focusEnd, colors] = calulateHighlightIndexes(pattern, match, charColors, starColor, dotColor);
-  }
-  const [rowStartPos] = getStartEndIndex(cipheredText);
+  if (state.search === undefined || state.search.results === null) return state;
+  const {cipheredText, search: {highlightFocusData, isActive, results}} = state;
+  const {visible: {rows}} = cipheredText;
+  if (rows === undefined || rows.length === 0 || !isActive || results.length === 0 || highlightFocusData.length === 0) return state;
+  const [focusStart, focusEnd, colors] = highlightFocusData;
+  const [rowStartPos] = getStartEndOfVisibleRows(cipheredText);
   let i = rowStartPos;
   const newRows = [];
   rows.forEach((row) => {
@@ -76,21 +79,17 @@ function searchLateReducer (state) {
     row.columns.forEach((col) => {
       let borderClass = null;
       let colorClass = null;
-      if (isActive && match) {
-        colorClass = colors[i];
-        if (i >= focusStart && i <= focusEnd) {
-          // color = lightenDarkenColor(color, 10);
-          // color = "#a0ff8e";
-          if (i === focusStart) {
-            borderClass = "highlight highlight-start";
-          } else if (i === focusEnd) {
-            borderClass = "highlight highlight-end";
-          } else {
-            borderClass = "highlight highlight-mid";
-          }
+      colorClass = colors[i];
+      if (i >= focusStart && i <= focusEnd) {
+        if (i === focusStart) {
+          borderClass = "highlight highlight-start";
+        } else if (i === focusEnd) {
+          borderClass = "highlight highlight-end";
+        } else {
+          borderClass = "highlight highlight-mid";
         }
       }
-      newCol.push(update(col, {colorClass: {$set: colorClass || ''}, borderClass: {$set: borderClass || ''}}));
+      newCol.push(update(col, {colorClass: {$set: colorClass}, borderClass: {$set: borderClass}}));
       i++;
     });
     newRows.push(update(row, {columns: {$set: newCol}}));
@@ -98,8 +97,20 @@ function searchLateReducer (state) {
   return update(state, {cipheredText: {visible: {rows: {$set: newRows}}}});
 }
 
-function* scrollIfNeededSaga () {
-  const {actions, search: searchInfo, cipheredText} = yield select(({actions, search: searchInfo, cipheredText}) => ({actions, search: searchInfo, cipheredText}));
+function* highlightFocusChangedSaga () {
+  const {actions, searchInfo} = yield select(({actions, search: searchInfo}) => ({actions, searchInfo}));
+  const {isActive, results, highlightFocus, replacer} = searchInfo;
+  const match = results[highlightFocus];
+  let highlightFocusData = [];
+  if (isActive && match) {
+    highlightFocusData = calulateHighlightIndexes(match, replacer, charColors, starColor, dotColor);
+  }
+  yield put({type: actions.searchHighlightFocusDataChanged, payload: {highlightFocusData}});
+  yield scrollToHighlightFocusSaga();
+}
+
+function* scrollToHighlightFocusSaga () {
+  const {actions, searchInfo, cipheredText} = yield select(({actions, search: searchInfo, cipheredText}) => ({actions, searchInfo, cipheredText}));
   const {isActive, results, highlightFocus} = searchInfo;
   const {visible: {rows}, cellHeight, pageColumns, pageRows, nbCells} = cipheredText;
   if (!isActive || results.length === 0 || !results[highlightFocus]) {
@@ -107,21 +118,22 @@ function* scrollIfNeededSaga () {
     return;
   }
   let {scrollTop} = cipheredText;
-  const startPos = results[highlightFocus].index;
-  const nextRow = Math.floor(startPos / pageColumns);
-  const currnetPageLastRow = rows[pageRows - 1].index;
-  const currnetPageFirstRow = rows[0].index;
-  if (nextRow >= currnetPageLastRow) {
-    scrollTop = (nextRow - 1) * cellHeight;
-    const bottom = Math.ceil(nbCells / pageColumns) * cellHeight - 1;
-    const maxTop = Math.max(0, bottom + 1 - pageRows * cellHeight);
+  const bottom = Math.ceil(nbCells / pageColumns) * cellHeight - 1;
+  const maxTop = Math.max(0, bottom + 1 - pageRows * cellHeight);
+  const match = results[highlightFocus];
+  const startPos = match.index;
+  const focusStartRow = Math.floor(startPos / pageColumns);
+  const visibleFirstRow = rows[0].index;
+  const visibleLastRow = rows[pageRows - 1].index;
+  // focus going out of visibla rows
+  if (focusStartRow >= visibleLastRow) {
+    scrollTop = (focusStartRow - 1) * cellHeight;
     scrollTop = Math.min(maxTop, scrollTop);
-  } else if (nextRow <= currnetPageFirstRow) {
-    scrollTop = (nextRow - 1) * (cellHeight);
+  } else if (focusStartRow <= visibleFirstRow) {
+    scrollTop = (focusStartRow - 1) * (cellHeight);
     if (scrollTop < 0) {scrollTop = 0;}
   }
   yield put({type: actions.cipheredTextScrolled, payload: {scrollTop}});
-
 }
 
 function SearchToolViewSelector (state) {
@@ -137,7 +149,6 @@ function SearchToolViewSelector (state) {
 }
 
 class SearchToolView extends React.PureComponent {
-
   searchPatternChange = (e) => {
     const pattern = e.target.value.replace(/[^abcd?*]|\*(?=\*)|^\*/, '');
     if (pattern.length > 50) {
@@ -146,8 +157,8 @@ class SearchToolView extends React.PureComponent {
     const {searchInfo: {isActive}} = this.props;
     if (isActive) {
       this.props.dispatch({type: this.props.searchIsActiveChanged, payload: {isActive: false}});
+      this.props.dispatch({type: this.props.searchResultsChanged, payload: {results: [], replacer: () => "", numResults: 0}});
       this.props.dispatch({type: this.props.searchHighlightFocusChanged, payload: {highlightFocus: 0}});
-      this.props.dispatch({type: this.props.searchResultsChanged, payload: {results: [], numResults: 0}});
     }
     this.props.dispatch({type: this.props.searchPatternChanged, payload: {pattern}});
   }
@@ -156,9 +167,9 @@ class SearchToolView extends React.PureComponent {
     const {cipherText, searchInfo: {pattern}} = this.props;
     let regexResults = [];
     this.props.dispatch({type: this.props.searchIsActiveChanged, payload: {isActive: true}});
-    const regex = patternToRegex(pattern);
+    const [regex, replacer] = patternToRegex(pattern);
     regexResults = regexSearch(regex, cipherText);
-    this.props.dispatch({type: this.props.searchResultsChanged, payload: {results: regexResults || [], numResults: regexResults.length}});
+    this.props.dispatch({type: this.props.searchResultsChanged, payload: {results: regexResults || [], replacer, numResults: regexResults.length}});
   }
 
   findNext = () => {
@@ -207,7 +218,7 @@ class SearchToolView extends React.PureComponent {
             each * may represent any sequence of symbols
           </div>
           <div style={{width: "30%"}}>
-            {isActive && (<label style={{float: "right"}}  className="occurrences">{numResults} occurence found</label>)}
+            {isActive && (<label style={{float: "right"}} className="occurrences">{numResults} occurence found</label>)}
             {(isActive && numResults > 0) && (<p style={{float: "right", clear: 'both'}} >current match: {highlightFocus + 1}</p>)}
           </div>
           <div style={{width: "17%"}}>
@@ -226,6 +237,7 @@ export default {
     searchPatternChanged: 'Search.Pattern.Changed',
     searchHighlightFocusChanged: 'Search.HighlightFocus.Changed',
     searchResultsChanged: 'Search.Results.Changed',
+    searchHighlightFocusDataChanged: 'Search.HighlightFocusData.Changed',
   },
   actionReducers: {
     appInit: appInitReducer,
@@ -235,11 +247,12 @@ export default {
     searchPatternChanged: searchPatternChangedReducer,
     searchHighlightFocusChanged: searchHighlightFocusChangedReducer,
     searchResultsChanged: searchResultsChangedReducer,
+    searchHighlightFocusDataChanged: searchHighlightFocusDataChangedReducer,
   },
   lateReducer: searchLateReducer,
   saga: function* () {
     const actions = yield select((state) => state.actions);
-    yield takeEvery(actions.searchHighlightFocusChanged, scrollIfNeededSaga);
+    yield takeEvery(actions.searchHighlightFocusChanged, highlightFocusChangedSaga);
   },
   views: {
     Search: connect(SearchToolViewSelector)(SearchToolView),

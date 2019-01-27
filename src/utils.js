@@ -218,13 +218,36 @@ export function applySubstitution (substitution, result) {
   }
 }
 
+const replaceStarMatches = (index, matched) => " ".repeat(matched[index].length);
+// place *, ? with " " and "-" to help with highlight coloring them
+const replacer = (transformer, regexMatch) => {
+  const charsList = [];
+  const fullText = transformer.reduce((str, item) => {
+    if (typeof item === 'number') {
+      const letter = regexMatch[item];
+      str += letter; // replace a,b,c,d
+      if (charsList.indexOf(letter) === -1) {
+        charsList.push(letter);
+      }
+    } else if (typeof item === 'function') {
+      str += item(regexMatch); // replace *
+    } else {
+      str += item; // replace ?
+    }
+    return str;
+  }, "");
+  return [fullText, charsList];
+};
+
 export function patternToRegex (pattern) {
   let regex = "";
   const charRegex = "([A-Z])";
   // const starRegex = "(.{0,12}?)";
   const starRegex = "([A-Z]*?)";
-  const dotRegex = "(.)"; // for ? in pattern
+  const dotRegex = "[A-Z]"; // for ? in pattern
   const charList = [];
+  const transformer = [];
+
   for (let index = 0; index < pattern.length; index++) {
     // can't start with *
     if (index === 0, pattern[0] === "*") {
@@ -234,75 +257,36 @@ export function patternToRegex (pattern) {
     switch (curChar) {
       case '?': {
         regex += dotRegex;
+        transformer.push("-");
         break;
       }
       case '*': {
         regex += starRegex;
+        charList.push("*");
+        transformer.push(replaceStarMatches.bind(null, charList.length));
         break;
       }
       default: {
         const pos = charList.indexOf(curChar);
         if (pos === -1) { //new group
           charList.push(curChar);
+          transformer.push(charList.length);
           regex += charRegex;
         } else {
-          regex += "\\" + (pos + 1).toString(); // previous group reference
+          const groupIndex = pos + 1;
+          regex += "\\" + (groupIndex).toString(); // previous group reference
+          transformer.push(groupIndex);
         }
       }
     }
   }
-  return new RegExp(regex, 'gm');
+  return [new RegExp(regex, 'gm'), replacer.bind(null, transformer)];
 }
 
-export function calulateHighlightIndexes (pattern, match, charColors, starColor, dotColor) {
-  const matches = [], cells = [];
-  // cresting pattern into regex groupes with pattern chars ex: [a:0, b:1, ?:2, *:3]
-  let groups = pattern.split("").reduce((arr, m) => {
-    if (m === "*" || m === "?") {
-      arr.push(m);
-    } else {
-      if (arr.indexOf(m) === -1) {
-        arr.push(m);
-      }
-    }
-    return arr;
-  }, []);
-
+export function calulateHighlightIndexes (match, replacerFn, charColors, starColor, dotColor) {
   let start = match.index;
-  let fullMatch = match[0];
+  const [fullMatch, chars] = replacerFn(match);
   const end = start + fullMatch.length - 1;
-  // used to color the cells beased on its regxe group, ex: [0: '#fff", 1: "#eee"]
-  const chars = [];
-  // aabb*c
-  // XXCC[aaa[X]aaaa]Z , * matched [aaaXaaaa], when coloring cells, this X will also be color
-  // to fix it, replace string matched by "*" and "?" so placeholders are collored correctly
-  // final string will be "XXCC        Z", space char indexes will be colored accordingly
-  const groupObj = groups.reduce((obj, m, i) => {
-    if (m === "*") {
-      obj[m][obj.starI++] = " ".repeat(match[i + 1].length);
-    } else if (m === '?') {
-      obj[m][obj.dotI++] = "-";
-    } else {
-      obj[m] = match[i + 1];
-      chars.push(match[i + 1]);
-    }
-    return obj;
-  }, {'*': [], starI: 0, "?": [], dotI: 0});
-  // record the pattern details and its chars values of matched string
-  // then replay it while replaceing string/char matched by "*" and "?" with splaces
-  // !important: lenght of match string for "*" are different for each match..
-  groupObj.starI = 0;
-  groupObj.dotI = 0;
-  fullMatch = pattern.split("").reduce((str, m) => {
-    if (m === "*") {
-      return str += groupObj[m][groupObj.starI++];
-    } else if (m === '?') {
-      return str += groupObj[m][groupObj.dotI++];
-    } else {
-      return str += groupObj[m];
-    }
-  }, "");
-
   const colors = {};
   let c = 0;
   for (let index = start; index <= end; index++) {
@@ -310,7 +294,6 @@ export function calulateHighlightIndexes (pattern, match, charColors, starColor,
     colors[index] = colorIndex === -1 ? (fullMatch[c] === " " ? starColor : dotColor) : charColors[colorIndex];
     c++;
   }
-
   return [start, end, colors];
 }
 
@@ -328,7 +311,7 @@ export function regexSearch (regex, text) {
   return matches;
 }
 
-export function getStartEndIndex (props) {
+export function getStartEndOfVisibleRows (props) {
   const {scrollTop, cellHeight, nbCells, pageRows, pageColumns} = props;
   const firstRow = Math.floor(scrollTop / cellHeight);
   const lastRow = Math.min(firstRow + pageRows - 1, Math.ceil(nbCells / pageColumns) - 1);
