@@ -1,7 +1,7 @@
 var {range} = require("range");
 var seedrandom = require("seedrandom");
 var {shuffle} = require("shuffle");
-var {generate} = require("./sentences");
+var {generate} = require("../bebras-modules/pemFioi/sentences_2");
 
 /**
  * Default constants
