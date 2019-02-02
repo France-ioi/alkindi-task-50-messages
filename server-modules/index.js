@@ -1,7 +1,7 @@
 var {range} = require("range");
 var seedrandom = require("seedrandom");
 var {shuffle} = require("shuffle");
-var {generate} = require("./sentences");
+var {generate} = require("../bebras-modules/pemFioi/sentences_2");
 
 /**
  * Default constants
@@ -92,7 +92,7 @@ module.exports.gradeAnswer = function (args, task_data, callback) {
     cells.map(i => (i === -1 ? " " : alphabet[i])).join("")
   );
 
-  const hintsRequested = getHintsRequested(args.task.hints_requested);
+  const hintsRequested = getHintsRequested(args.answer.hints_requested);
 
   function gradeByVersion (version) {
     const {numMessages = 1} = versions[version];
