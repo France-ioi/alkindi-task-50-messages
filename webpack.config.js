@@ -57,7 +57,7 @@ const config = module.exports = {
     }),
     new CopyWebpackPlugin([
       {from: 'bebras-modules/', to: 'bebras-modules/'},
-      {from: 'index.prod.html', to: 'index.html'}
+      {from: `index${!isDev?'.prod':''}.html`, to: 'index.html'}
     ])
   ],
   externals: { /* TODO: clean this up by not having a dual browser/node module */
