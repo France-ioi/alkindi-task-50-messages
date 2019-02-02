@@ -98,6 +98,13 @@ export function updateGridVisibleArea (grid, options) {
   return grid;
 }
 
+export function getClassNames (colorClass, borderClass) {
+  let classNames = null;
+  if (colorClass) { classNames = colorClass; }
+  if (borderClass) { classNames = classNames ? (classNames + " " + borderClass) : borderClass; }
+  return classNames;
+}
+
 /* SUBSTITUTION functions */
 
 
@@ -265,7 +272,7 @@ export function patternToRegex (pattern) {
       default: {
         if (/[A-Z]/.test(curChar)) {
           regex += curChar;
-          transformer.push(curChar);
+          transformer.push(".");
         } else {
           const pos = charList.indexOf(curChar);
           if (pos === -1) { //new group

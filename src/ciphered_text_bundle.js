@@ -1,7 +1,7 @@
 import React from 'react';
 import {connect} from 'react-redux';
 
-import {updateGridGeometry, updateGridVisibleRows, selectTaskData} from './utils';
+import {updateGridGeometry, updateGridVisibleRows, selectTaskData, getClassNames} from './utils';
 
 function appInitReducer (state, _action) {
   return {
@@ -64,12 +64,6 @@ function CipherTextViewSelector (state) {
 class CipherTextView extends React.PureComponent {
   render () {
     const {width, height, visibleRows, cellWidth, cellHeight, bottom} = this.props;
-    const getClassNames = (colorClass, borderClass) => {
-      let classNames = null;
-      if (colorClass) { classNames = colorClass; }
-      if (borderClass) { classNames = classNames ? (classNames + " " + borderClass) : borderClass; }
-      return classNames;
-    };
     return (
       <div>
         <div ref={this.refTextBox} onScroll={this.onScroll} style={{position: 'relative', width: width && `${width}px`, height: height && `${height}px`, overflowY: 'scroll'}}>
