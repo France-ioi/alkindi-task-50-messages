@@ -209,6 +209,10 @@
     border-right: none;
 }
 
+.group-color-caps {
+background-color: #fb6161;
+}
+
 .group-color-star {
 background-color: #e4e73b;
 }

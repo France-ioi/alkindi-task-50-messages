@@ -24,6 +24,8 @@ const defaultState = {
 const starColor = 'group-color-star';
 // highlight color class for ? matched char in pattern match
 const dotColor = "group-color-dot";
+// highlight color class for A-Z matched char in pattern match
+const capsColor = "group-color-caps";
 // highlight colors class for a,b,c,d in patterns
 const charColors = [
   'group-color-0',
@@ -103,7 +105,7 @@ function* highlightFocusChangedSaga () {
   const match = results[highlightFocus];
   let highlightFocusData = [];
   if (isActive && match) {
-    highlightFocusData = calulateHighlightIndexes(match, replacer, charColors, starColor, dotColor);
+    highlightFocusData = calulateHighlightIndexes(match, replacer, charColors, starColor, dotColor, capsColor);
   }
   yield put({type: actions.searchHighlightFocusDataChanged, payload: {highlightFocusData}});
   yield scrollToHighlightFocusSaga();
@@ -150,7 +152,7 @@ function SearchToolViewSelector (state) {
 
 class SearchToolView extends React.PureComponent {
   searchPatternChange = (e) => {
-    const pattern = e.target.value.replace(/[^abcd?*]|\*(?=\*)|^\*/, '');
+    const pattern = e.target.value.replace(/[^A-Zabcd?*]|\*(?=\*)|^\*/, '');
     if (pattern.length > 50) {
       return;
     }
@@ -168,6 +170,7 @@ class SearchToolView extends React.PureComponent {
     let regexResults = [];
     this.props.dispatch({type: this.props.searchIsActiveChanged, payload: {isActive: true}});
     const [regex, replacer] = patternToRegex(pattern);
+    console.log('regex :', regex);
     regexResults = regexSearch(regex, cipherText);
     this.props.dispatch({type: this.props.searchResultsChanged, payload: {results: regexResults || [], replacer, numResults: regexResults.length}});
   }

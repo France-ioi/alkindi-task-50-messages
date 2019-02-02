@@ -263,15 +263,20 @@ export function patternToRegex (pattern) {
         break;
       }
       default: {
-        const pos = charList.indexOf(curChar);
-        if (pos === -1) { //new group
-          charList.push(curChar);
-          transformer.push(charList.length);
-          regex += charRegex;
+        if (/[A-Z]/.test(curChar)) {
+          regex += curChar;
+          transformer.push(curChar);
         } else {
-          const groupIndex = pos + 1;
-          regex += "\\" + (groupIndex).toString(); // previous group reference
-          transformer.push(groupIndex);
+          const pos = charList.indexOf(curChar);
+          if (pos === -1) { //new group
+            charList.push(curChar);
+            transformer.push(charList.length);
+            regex += charRegex;
+          } else {
+            const groupIndex = pos + 1;
+            regex += "\\" + (groupIndex).toString(); // previous group reference
+            transformer.push(groupIndex);
+          }
         }
       }
     }
@@ -279,7 +284,7 @@ export function patternToRegex (pattern) {
   return [new RegExp(regex, 'gm'), replacer.bind(null, transformer)];
 }
 
-export function calulateHighlightIndexes (match, replacerFn, charColors, starColor, dotColor) {
+export function calulateHighlightIndexes (match, replacerFn, charColors, starColor, dotColor, capcColor) {
   let start = match.index;
   const [fullMatch, chars] = replacerFn(match);
   const end = start + fullMatch.length - 1;
@@ -287,7 +292,7 @@ export function calulateHighlightIndexes (match, replacerFn, charColors, starCol
   let c = 0;
   for (let index = start; index <= end; index++) {
     const colorIndex = chars.indexOf(fullMatch[c]);
-    colors[index] = colorIndex === -1 ? (fullMatch[c] === " " ? starColor : dotColor) : charColors[colorIndex];
+    colors[index] = colorIndex === -1 ? (fullMatch[c] === " " ? starColor : (fullMatch[c] === "-" ? dotColor : capcColor)) : charColors[colorIndex];
     c++;
   }
   return [start, end, colors];
