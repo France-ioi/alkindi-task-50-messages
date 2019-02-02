@@ -8,8 +8,8 @@
     <script class="remove" type="text/javascript" src="bebras-modules/integrationAPI.01/official/miniPlatform.js"></script>
 
     <!-- task -->
-    <script src="build/vendor.js?v=2"></script>
-    <script src="build/bundle.js?v=2"></script>
+    <script src="/vendor.js?v=2"></script>
+    <script src="/bundle.js?v=2"></script>
 </head>
 <body>
     <div id="container" class="container"></div>
@@ -21,7 +21,7 @@
                 version: 1
                 },
             server_module: {
-                baseUrl: 'http://35.158.119.224:3101/'
+                baseUrl: 'http://localhost:3101/'
             }
         };
         window.app = ReactTask.run(document.getElementById('container'), options);
