@@ -168,8 +168,12 @@ function gradeSingleMessage (alphabet, cipherText, clearText, hintsRequested, su
 
 function grade50Messages (alphabet, messages, privateData, hintsRequested, submittedKeys) {
   const evalLength = 200; /* Score on first 200 characters only */
-  let nHints = range(0, 50).map(index => Array.isArray(hintsRequested[index]) ? hintsRequested[index].length : 0).reduce(function (total, current) {return current + total;}, 0);
-  nHints = Math.min(nHints, alphabet.length);
+  const nHints = range(0, 50)
+  .map(index =>
+    Array.isArray(hintsRequested[index])
+    ? ((((hintsRequested[index]).filter(h => h.type === 'type_3')).length === 0) ? hintsRequested[index].length : 25)
+    : 0)
+    .reduce(function (total, current) {return current + total;}, 0);
 
   function grade (alphabet, clearText, cipherText, submittedKey) {
     if (submittedKey.indexOf(' ') !== -1) {
@@ -209,19 +213,20 @@ function grade50Messages (alphabet, messages, privateData, hintsRequested, submi
   const decryptedMessages = [];
 
   for (let index = 0; index < submittedKeys.length; index++) {
+    let decryptedOk = false;
     const nHints3 = hintsRequested[index] ? ((hintsRequested[index]).filter(h => h.type === 'type_3')).length : 0;
     if (nHints3 !== 0) {
-      nHints -= hintsRequested[index].length;
+      decryptedOk = true;
     } else {
       const submittedKey = submittedKeys[index];
       const {cipherText} = messages[index];
       const {clearText} = privateData[index];
-      const decryptedOk = grade(alphabet, clearText, cipherText, submittedKey);
-      if (decryptedOk) {
-        decryptedMessages.push(index + 1);
-        if (decryptedMessages.length === 4) {
-          break;
-        }
+      decryptedOk = grade(alphabet, clearText, cipherText, submittedKey);
+    }
+    if (decryptedOk) {
+      decryptedMessages.push(index + 1);
+      if (decryptedMessages.length === 4) {
+        break;
       }
     }
   }
@@ -231,16 +236,16 @@ function grade50Messages (alphabet, messages, privateData, hintsRequested, submi
     }.`;
 
   function listOfNumToStr (numArr) {
-    if (numArr.length == 0) {
-      return "" + numArr[0];
+    if (numArr.length === 1) {
+      return " " + numArr[0];
     }
     const last = numArr[numArr.length - 1].toString();
-    return numArr.join(', ').replace(', ' + last, ' and ' + last);
+    return "s " + numArr.join(', ').replace(', ' + last, ' and ' + last);
   }
 
   if (decryptedMessages.length > 0) {
-    score = Math.max(0, (25 * decryptedMessages.length) - nHints);
-    message = `You have correctly decrypted messages ${listOfNumToStr(decryptedMessages)}` + message;
+    score = Math.max(0, (50 * decryptedMessages.length) - nHints);
+    message = `You have correctly decrypted message${listOfNumToStr(decryptedMessages)}` + message;
   } else {
     message = 'No mesesages decrypted!' + message;
   }
