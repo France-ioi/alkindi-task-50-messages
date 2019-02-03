@@ -145,22 +145,22 @@ function gradeSingleMessage (alphabet, cipherText, clearText, hintsRequested, su
   let score = 0,
     message =
       "Il y a au moins une différence entre les 200 premiers caractères de votre texte déchiffré et ceux du texte d'origine.";
-  if (correctChars == evalLength) {
-    let nHints1 = (hintsRequested.filter(h => h.type === 'type_1')).length || 0;
-    let nHints2 = (hintsRequested.filter(h => h.type === 'type_2')).length || 0;
-    let nHints3 = (hintsRequested.filter(h => h.type === 'type_3')).length || 0;
-    let nHints = hintsRequested.length;
-    if (nHints3 !== 0) {
-      nHints1 = 0;
-      nHints2 = 0;
-      nHints = alphabet.length;
-      nHints3 = alphabet.length;
-    }
 
-    score = Math.max(0, 100 - ((nHints1 * 5) + (nHints2 * 10) + nHints3));
-    message = `Bravo, vous avez bien déchiffré le texte. Vous avez utilisé ${nHints} indice${
-      nHints > 1 ? "s" : ""
-      }.`;
+  const nHints3 = (hintsRequested.filter(h => h.type === 'type_3')).length || 0;
+
+  if (nHints3 !== 0) {
+    message = "you requested all answer keys as hints!";
+  } else {
+    if (correctChars == evalLength) {
+      const nHints1 = (hintsRequested.filter(h => h.type === 'type_1')).length || 0;
+      const nHints2 = (hintsRequested.filter(h => h.type === 'type_2')).length || 0;
+      const nHints = hintsRequested.length;
+
+      score = Math.max(0, 100 - ((nHints1 * 5) + (nHints2 * 10)));
+      message = `Bravo, vous avez bien déchiffré le texte. Vous avez utilisé ${nHints} indice${
+        nHints > 1 ? "s" : ""
+        }.`;
+    }
   }
 
   return {score, message};
@@ -209,15 +209,19 @@ function grade50Messages (alphabet, messages, privateData, hintsRequested, submi
   const decryptedMessages = [];
 
   for (let index = 0; index < submittedKeys.length; index++) {
-    const submittedKey = submittedKeys[index];
-    const {cipherText} = messages[index];
-    const {clearText} = privateData[index];
-    const decryptedOk = grade(alphabet, clearText, cipherText, submittedKey);
-
-    if (decryptedOk) {
-      decryptedMessages.push(index + 1);
-      if (decryptedMessages.length === 4) {
-        break;
+    const nHints3 = hintsRequested[index] ? ((hintsRequested[index]).filter(h => h.type === 'type_3')).length : 0;
+    if (nHints3 !== 0) {
+      nHints -= hintsRequested[index].length;
+    } else {
+      const submittedKey = submittedKeys[index];
+      const {cipherText} = messages[index];
+      const {clearText} = privateData[index];
+      const decryptedOk = grade(alphabet, clearText, cipherText, submittedKey);
+      if (decryptedOk) {
+        decryptedMessages.push(index + 1);
+        if (decryptedMessages.length === 4) {
+          break;
+        }
       }
     }
   }
@@ -414,7 +418,7 @@ function grantHints (alphabet, encodingKey, decodingKey, hintRequests) {
       symbol = alphabet[cellRank];
       cellRank = alphabet.indexOf(encodingKey[cellRank]);
     } else {
-      return {messageIndex, cellRank, symbol:'', key:decodingKey, type};
+      return {messageIndex, cellRank, symbol: '', key: decodingKey, type};
     }
     return {messageIndex, cellRank, symbol, type};
   });
