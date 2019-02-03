@@ -1,15 +1,25 @@
-var shuffle = require('shuffle-array');
 var {generateSentence} = require("../bebras-modules/pemFioi/sentences_2");
+
+var shuffle = function (arrayData, rng) {
+  var nbValues = arrayData.length;
+  for (var iValue = 0; iValue < nbValues; iValue++) {
+     var pos = iValue + Math.floor(rng() * (nbValues - iValue));
+     var tmp = arrayData[iValue];
+     arrayData[iValue] = arrayData[pos];
+     arrayData[pos] = tmp;
+  }
+};
 
 var defaultNbSentences = 50;
 var longNbSentences = 1000;
 
-function getRandomInt (max) {
-   return Math.floor(Math.random() * Math.floor(max));
+function getRandomInt (max, rng) {
+   // return Math.floor(Math.random() * Math.floor(max));
+   return Math.trunc(rng() * Math.floor(max));
 }
 
-function randomFromArray (elems) {
-   return elems[getRandomInt(elems.length)];
+function randomFromArray (elems, rng) {
+   return elems[getRandomInt(elems.length, rng)];
 }
 
 /*
@@ -18,7 +28,7 @@ function randomFromArray (elems) {
    Type 1 has the form KSTNJWY, then 1 of (A,E,I) repeated twice, then 1 of (Z,X,H) repeated twice
    In both cases, letters after the K are then shuffled
 */
-function genPassword (type) {
+function genPassword (type, rng) {
 
    var availableLetters = [
       {
@@ -36,14 +46,14 @@ function genPassword (type) {
 
    var letters = availableLetters[type];
    var pass = letters.included.slice(0);
-   var extraA = randomFromArray(letters.groupA);
-   var extraB = randomFromArray(letters.groupB);
+   var extraA = randomFromArray(letters.groupA, rng);
+   var extraB = randomFromArray(letters.groupB, rng);
    for (var nbExtra = 0; nbExtra < 2; nbExtra++) {
       pass.push(extraA);
       pass.push(extraB);
    }
 
-   shuffle(pass);
+   shuffle(pass, rng);
 
    var strPass = "K" + pass.join('');
    //console.log(strPass);
@@ -55,14 +65,14 @@ function genMessagesParams (nbMessages, rng) {
    for (var iMessage = 0; iMessage < nbMessages - 4; iMessage++) {
       messagesParams.push({
          prefix: "",
-         extra: [genPassword(0), genPassword(1)],
+         extra: [genPassword(0, rng), genPassword(1, rng)],
          nbSentences: defaultNbSentences
       });
    }
-   var passA1 = genPassword(0);
-   var passA2 = genPassword(1);
-   var passB1 = genPassword(0);
-   var passB2 = genPassword(1);
+   var passA1 = genPassword(0, rng);
+   var passA2 = genPassword(1, rng);
+   var passB1 = genPassword(0, rng);
+   var passB2 = genPassword(1, rng);
    var sharedSentence = generateSentence(rng,1,"all",false,true);
    messagesParams.push({
       prefix: sharedSentence,
@@ -79,7 +89,7 @@ function genMessagesParams (nbMessages, rng) {
       extra: [passB1, passB2],
       nbSentences: defaultNbSentences
    });
-   shuffle(messagesParams);
+   shuffle(messagesParams, rng);
 
    messagesParams.unshift({
       prefix: "DANS VOTRE MESSAGE VOUS DITES " + sharedSentence + " VOICI MA REPONSE",
@@ -100,7 +110,7 @@ function genMessages (messagesParams, rng) {
       for (var iExtra = 0; iExtra < params.extra.length; iExtra++) {
          sentences.push(params.extra[iExtra]);
       }
-      shuffle(sentences);
+      shuffle(sentences, rng);
       sentences.unshift(params.prefix);
       messages.push(sentences.join(' '));
    }
@@ -117,8 +127,8 @@ exports.genMessagesForVersion = function genMessagesForVersion (version, rng) {
          }], rng)
       };
    } else if (version == 2) {
-      var pass1 = genPassword(0);
-      var pass2 = genPassword(1);
+      var pass1 = genPassword(0, rng);
+      var pass2 = genPassword(1, rng);
       return {
          messages: genMessages([{
             prefix: "",
