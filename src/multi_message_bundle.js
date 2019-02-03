@@ -39,7 +39,7 @@ class MultiMessageView extends React.PureComponent {
         <Button bsSize="large" onClick={this.onPrevious} disabled={index <= 0}>
           <Glyphicon glyph="arrow-left" />
         </Button>
-        <span style={{padding: "0 20px"}}> Message: {index + 1} / {numMessages} </span>
+        <span style={{padding: "0 20px"}}> Message : {index + 1} / {numMessages} </span>
         <Button bsSize="large" onClick={this.onNext} disabled={numMessages - 1 <= index}>
           <Glyphicon glyph="arrow-right" />
         </Button>

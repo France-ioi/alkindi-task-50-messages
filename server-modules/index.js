@@ -149,7 +149,7 @@ function gradeSingleMessage (alphabet, cipherText, clearText, hintsRequested, su
   const nHints3 = (hintsRequested.filter(h => h.type === 'type_3')).length || 0;
 
   if (nHints3 !== 0) {
-    message = "you requested all answer keys as hints!";
+    message = "Vous avez demandé tous les indices !";
   } else {
     if (correctChars == evalLength) {
       const nHints1 = (hintsRequested.filter(h => h.type === 'type_1')).length || 0;
@@ -231,7 +231,7 @@ function grade50Messages (alphabet, messages, privateData, hintsRequested, submi
     }
   }
 
-  let score = 0, message = `. you used ${nHints} Hint${
+  let score = 0, message = `. Vous avez utilisé ${nHints} indice${
     nHints > 1 ? "s" : ""
     }.`;
 
@@ -245,9 +245,9 @@ function grade50Messages (alphabet, messages, privateData, hintsRequested, submi
 
   if (decryptedMessages.length > 0) {
     score = Math.max(0, (50 * decryptedMessages.length) - nHints);
-    message = `You have correctly decrypted message${listOfNumToStr(decryptedMessages)}` + message;
+    message = `Vous avez correctement décrypté ${listOfNumToStr(decryptedMessages)} message(s).` + message;
   } else {
-    message = 'No mesesages decrypted!' + message;
+    message = 'Vous n\'avez décrypté aucun message.' + message;
   }
 
   if (score < 0) {

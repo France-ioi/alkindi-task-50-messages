@@ -25,13 +25,13 @@ class Workspace extends React.PureComponent {
     } = this.props;
     const getPasswordTxt = () => {
       return passwords.map(s => <strong>{s}</strong>).reduce((accu, elem) => {
-        return accu === null ? [elem] : [...accu, ' and ', elem];
+        return accu === null ? [elem] : [...accu, ' et ', elem];
       }, null);
     };
     return (
       <div>
         {passwords && (<h4 style={{marginTop: '25px', marginBottom: '0'}}>
-          Here are the two passwords contained in the original message: {getPasswordTxt()}.</h4>)}
+          Voici les deux mots de passe contenus dans le message (non chiffré) : {getPasswordTxt()}.</h4>)}
         {(numMessages > 1) && <MultiMessage />}
         <br />
         <h2>{"Message chiffré"}</h2>
@@ -42,7 +42,7 @@ class Workspace extends React.PureComponent {
             <Search />
           </div>
         )}
-        <h2>{"Analyse de fréquence de la sélection"}</h2>
+        <h2>{"Analyse de fréquence"}</h2>
         <FrequencyAnalysis />
         <h2>Substitution:</h2>
         <div className="clearfix">
