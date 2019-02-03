@@ -171,7 +171,7 @@ function grade50Messages (alphabet, messages, privateData, hintsRequested, submi
   const nHints = range(0, 50)
   .map(index =>
     Array.isArray(hintsRequested[index])
-    ? ((((hintsRequested[index]).filter(h => h.type === 'type_3')).length === 0) ? hintsRequested[index].length : 25)
+    ? ((((hintsRequested[index]).filter(h => h.type === 'type_3')).length === 0) ? hintsRequested[index].length : 26)
     : 0)
     .reduce(function (total, current) {return current + total;}, 0);
 
