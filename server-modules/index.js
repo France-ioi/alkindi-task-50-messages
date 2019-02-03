@@ -124,12 +124,24 @@ function gradeSingleMessage (alphabet, cipherText, clearText, hintsRequested, su
     submittedKey,
     evalText
   );
+
+  let evalClearText = '';
+  let j = 0;
+  for (let i = 0; i < evalLength; i++) {
+    if (!alphabet.includes(clearText[j])) {
+      j++;
+    }
+    evalClearText += clearText[j];
+    j++;
+  }
+
   let correctChars = 0;
   for (let i = 0; i < evalLength; i += 1) {
-    if (clearText[i] === decodedText[i]) {
+    if (evalClearText[i] === decodedText[i]) {
       correctChars += 1;
     }
   }
+
   let score = 0,
     message =
       "Il y a au moins une différence entre les 200 premiers caractères de votre texte déchiffré et ceux du texte d'origine.";
@@ -165,17 +177,32 @@ function grade50Messages (alphabet, messages, privateData, hintsRequested, submi
     }
 
     const evalText = cipherText.slice(0, evalLength);
+
+    let evalClearText = '';
+    let j = 0;
+
+    for (let i = 0; i < evalLength; i++) {
+      if (!alphabet.includes(clearText[j])) {
+        j++;
+      }
+      evalClearText += clearText[j];
+      j++;
+    }
+
     const decodedText = monoAlphabeticDecode(
       alphabet,
       submittedKey,
       evalText
     );
+
     let correctChars = 0;
+
     for (let i = 0; i < evalLength; i += 1) {
-      if (clearText[i] === decodedText[i]) {
+      if (evalClearText[i] === decodedText[i]) {
         correctChars += 1;
       }
     }
+
     return (correctChars == evalLength);
   }
 
