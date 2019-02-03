@@ -387,7 +387,7 @@ function grantHints (alphabet, encodingKey, decodingKey, hintRequests) {
       symbol = alphabet[cellRank];
       cellRank = alphabet.indexOf(encodingKey[cellRank]);
     } else {
-      return {messageIndex, cellRank, symbol:'', key:encodingKey, type};
+      return {messageIndex, cellRank, symbol:'', key:decodingKey, type};
     }
     return {messageIndex, cellRank, symbol, type};
   });

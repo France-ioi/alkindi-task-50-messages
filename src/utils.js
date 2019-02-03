@@ -100,8 +100,8 @@ export function updateGridVisibleArea (grid, options) {
 
 export function getClassNames (colorClass, borderClass) {
   let classNames = null;
-  if (colorClass) { classNames = colorClass; }
-  if (borderClass) { classNames = classNames ? (classNames + " " + borderClass) : borderClass; }
+  if (colorClass) {classNames = colorClass;}
+  if (borderClass) {classNames = classNames ? (classNames + " " + borderClass) : borderClass;}
   return classNames;
 }
 
@@ -124,6 +124,7 @@ export function dumpSubstitutions (alphabet, substitutions) {
 }
 
 export function loadSubstitutions (alphabet, hints, substitutionDumps) {
+  const allHints = hints.filter(hint => hint.type === 'type_3');
   return substitutionDumps.map((cells, substitutionIndex) => {
     const $cells = [];
     cells.forEach((cell, cellIndex) => {
@@ -135,12 +136,22 @@ export function loadSubstitutions (alphabet, hints, substitutionDumps) {
         locked: {$set: locked !== 0},
       };
     });
-    hints.forEach(({messageIndex: i, cellRank: j, symbol}) => {
-      if (substitutionIndex === i) {
+    hints.forEach(({messageIndex: i, cellRank: j, symbol, type}) => {
+      if (substitutionIndex === i && type !== 'type_3') {
         $cells[j] = {
           editable: {$set: symbol},
           hint: {$set: true},
         };
+      }
+    });
+    allHints.forEach(({messageIndex: i, key}) => {
+      if (substitutionIndex === i) {
+        key.split('').forEach((symbol, j) => {
+          $cells[j] = {
+            editable: {$set: symbol},
+            hint: {$set: true},
+          };
+        });
       }
     });
     let substitution = makeSubstitution(alphabet);

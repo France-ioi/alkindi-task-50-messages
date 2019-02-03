@@ -21,6 +21,21 @@ class Hint1View extends React.PureComponent {
     };
 }
 
+class Hint3View extends React.PureComponent {
+    render () {
+        const {hintRequest: {isActive}} = this.props;
+        return (
+            <div style={{textAlign: "center", margin: "10px 0"}}>
+                <Button onClick={this.requestHint} disabled={isActive}>{`Valider`}</Button>
+            </div>
+        );
+    }
+    requestHint = () => {
+        const {dispatch, requestHint, messageIndex} = this.props;
+        dispatch({type: requestHint, payload: {request: {messageIndex, cellRank: 0, type: "type_3"}}});
+    };
+}
+
 class Hint2View extends React.PureComponent {
     constructor (props) {
         super(props);
@@ -104,6 +119,32 @@ function HintsPresentor ({pointsTxt, isLeft, children}) {
     );
 }
 
+function HintsPresentor2 ({pointsTxt, isLeft, isRight = false, children}) {
+    const customBorder = {display: "inline-grid", padding: "10px", border: "1px solid #000", width: "33%", background: "rgb(202, 202, 202)"};
+    if (isLeft) {
+        if (!isRight) {
+            customBorder.borderRight = "0";
+        }
+    } else {
+        customBorder.borderLeft = "0";
+    }
+    return (
+        <div style={customBorder}>
+            <p style={{fontWeight: "bold", textAlign: "center", height: "40px"}}>
+                {"Indices"}
+            </p>
+            <p>
+                {"A hint costs "}
+                <span style={{fontWeight: "bold"}}>{pointsTxt}</span>
+                {
+                    ", get answer key as hints..."
+                }
+            </p>
+            {children}
+        </div>
+    );
+}
+
 function HintSelector (state) {
     const {alphabet, numMessages, hints} = selectTaskData(state);
     const {
@@ -137,9 +178,12 @@ class Hints extends React.PureComponent {
                         <HintsPresentor pointsTxt={`${numMessages === 50 ? "1" : "5"} points`} isLeft={true}>
                             <Hint1View {...this.props} />
                         </HintsPresentor>
-                        <HintsPresentor pointsTxt={`${numMessages === 50 ? "1" : "10"} points`} isLeft={false}>
+                        <HintsPresentor pointsTxt={`${numMessages === 50 ? "1" : "10"} points`} isLeft={true}>
                             <Hint2View {...this.props} />
                         </HintsPresentor>
+                        <HintsPresentor2 pointsTxt={`1 points`} isLeft={true} isRight={true}>
+                            <Hint3View {...this.props} />
+                        </HintsPresentor2>
                     </div>
                 </div>
             </div>);
