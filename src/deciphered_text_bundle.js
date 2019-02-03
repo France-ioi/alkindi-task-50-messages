@@ -27,10 +27,23 @@ function taskInitReducer (state, _action) {
   return {...state, decipheredText};
 }
 
+function taskRefreshReducer (state) {
+  let {decipheredText} = state;
+  if (!decipheredText) {
+    return state;
+  }
+  const {cipherText} = selectTaskData(state);
+  decipheredText = {...decipheredText, cells: cipherText, nbCells: cipherText.length};
+  decipheredText = updateGridGeometry(decipheredText);
+  decipheredText = updateGridVisibleRows(decipheredText);
+  return {...state, decipheredText};
+}
+
 function decipheredTextResizedReducer (state, {payload: {width}}) {
   let {decipheredText} = state;
   decipheredText = {...decipheredText, width, height: 4 * decipheredText.cellHeight};
   decipheredText = updateGridGeometry(decipheredText);
+  decipheredText = updateGridVisibleRows(decipheredText);
   return {...state, decipheredText};
 }
 

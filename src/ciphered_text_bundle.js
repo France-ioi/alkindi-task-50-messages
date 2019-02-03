@@ -32,6 +32,7 @@ function taskRefreshReducer (state) {
   }
   const {cipherText} = selectTaskData(state);
   cipheredText = {...cipheredText, cells: cipherText, nbCells: cipherText.length};
+  cipheredText = updateGridGeometry(cipheredText);
   cipheredText = updateGridVisibleRows(cipheredText);
   return {...state, cipheredText};
 }
