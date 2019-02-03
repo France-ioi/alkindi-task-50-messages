@@ -211,7 +211,7 @@ class SearchToolView extends React.PureComponent {
     return (
       <div className="search">
         <div className="search-box">
-          <label className="title">Pattern: </label>
+          <label className="title">Motif : </label>
           <input type="text" className="pattern" value={pattern} onChange={this.searchPatternChange} onKeyPress={this.onKeyPress} />
         </div>
         <div className="note">
