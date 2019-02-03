@@ -10,7 +10,7 @@ var shuffle = function (arrayData, rng) {
   }
 };
 
-var defaultNbSentences = 50;
+var defaultNbSentences = 20;
 var longNbSentences = 1000;
 
 function getRandomInt (max, rng) {
