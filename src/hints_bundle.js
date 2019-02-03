@@ -25,7 +25,7 @@ class Hint3View extends React.PureComponent {
     render () {
         const {hintRequest: {isActive}} = this.props;
         return (
-            <div style={{textAlign: "center", margin: "10px 0"}}>
+            <div style={{textAlign: "center", margin: "10px 0", paddingTop: '10px'}}>
                 <Button onClick={this.requestHint} disabled={isActive}>{`Valider`}</Button>
             </div>
         );
@@ -119,7 +119,7 @@ function HintsPresentor ({pointsTxt, isLeft, children}) {
     );
 }
 
-function HintsPresentor2 ({pointsTxt, isLeft, isRight = false, children}) {
+function HintsPresentor2 ({isLeft, isRight = false, children}) {
     const customBorder = {display: "inline-grid", padding: "10px", border: "1px solid #000", width: "33%", background: "rgb(202, 202, 202)"};
     if (isLeft) {
         if (!isRight) {
@@ -130,14 +130,13 @@ function HintsPresentor2 ({pointsTxt, isLeft, isRight = false, children}) {
     }
     return (
         <div style={customBorder}>
-            <p style={{fontWeight: "bold", textAlign: "center", height: "40px"}}>
+            <p style={{fontWeight: "bold", textAlign: "center"}}>
                 {"Indices"}
             </p>
+            <p>&nbsp;</p>
             <p>
-                {"A hint costs "}
-                <span style={{fontWeight: "bold"}}>{pointsTxt}</span>
                 {
-                    ", get answer key as hints..."
+                    "Get answer key as hints..."
                 }
             </p>
             {children}
