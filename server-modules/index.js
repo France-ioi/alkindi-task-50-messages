@@ -248,7 +248,7 @@ function grade50Messages (alphabet, messages, privateData, hintsRequested, submi
   }
 
   if (decryptedMessages.length > 0) {
-    score = Math.max(0, (50 * decryptedMessages.length) - nHints);
+    score = Math.max(0, (25 * decryptedMessages.length) - nHints);
     message = `Vous avez correctement décrypté le(s) message(s) ${listOfNumToStr(decryptedMessages)}` + message;
   } else {
     message = 'Vous n\'avez décrypté aucun message.' + message;
