@@ -1,8 +1,7 @@
 var {range} = require("range");
 var seedrandom = require("seedrandom");
 var {shuffle} = require("shuffle");
-var {generate} = require("../bebras-modules/pemFioi/sentences_2");
-
+var {genMessagesForVersion} = require('./generator');
 /**
  * Default constants
  */
@@ -81,7 +80,6 @@ module.exports.requestHint = function (args, callback) {
 
 module.exports.gradeAnswer = function (args, task_data, callback) {
   const version = parseInt(args.task.params.version);
-
   const {
     publicData: {alphabet, messages},
     privateData
@@ -136,11 +134,18 @@ function gradeSingleMessage (alphabet, cipherText, clearText, hintsRequested, su
     message =
       "Il y a au moins une différence entre les 200 premiers caractères de votre texte déchiffré et ceux du texte d'origine.";
   if (correctChars == evalLength) {
-    const nHints1 = (hintsRequested.filter(h => h.type === 'type_1')).length || 0;
-    const nHints2 = (hintsRequested.filter(h => h.type === 'type_2')).length || 0;
-    const nHints = hintsRequested.length;
+    let nHints1 = (hintsRequested.filter(h => h.type === 'type_1')).length || 0;
+    let nHints2 = (hintsRequested.filter(h => h.type === 'type_2')).length || 0;
+    let nHints3 = (hintsRequested.filter(h => h.type === 'type_3')).length || 0;
+    let nHints = hintsRequested.length;
+    if (nHints3 !== 0) {
+      nHints1 = 0;
+      nHints2 = 0;
+      nHints = alphabet.length;
+      nHints3 = alphabet.length;
+    }
 
-    score = Math.max(0, 100 - ((nHints1 * 5) + (nHints2 * 10)));
+    score = Math.max(0, 100 - ((nHints1 * 5) + (nHints2 * 10) + nHints3));
     message = `Bravo, vous avez bien déchiffré le texte. Vous avez utilisé ${nHints} indice${
       nHints > 1 ? "s" : ""
       }.`;
@@ -151,7 +156,8 @@ function gradeSingleMessage (alphabet, cipherText, clearText, hintsRequested, su
 
 function grade50Messages (alphabet, messages, privateData, hintsRequested, submittedKeys) {
   const evalLength = 200; /* Score on first 200 characters only */
-  const nHints = range(0, 50).map(index => Array.isArray(hintsRequested[index]) ? hintsRequested[index].length : 0).reduce(function (total, current) {return current + total;}, 0);
+  let nHints = range(0, 50).map(index => Array.isArray(hintsRequested[index]) ? hintsRequested[index].length : 0).reduce(function (total, current) {return current + total;}, 0);
+  nHints = Math.min(nHints, alphabet.length);
 
   function grade (alphabet, clearText, cipherText, submittedKey) {
     if (submittedKey.indexOf(' ') !== -1) {
@@ -215,13 +221,9 @@ function grade50Messages (alphabet, messages, privateData, hintsRequested, submi
   return {score, message};
 }
 
-function generateMessageData (alphabet, seedInt, hintsRequested) {
-  const rng0 = seedrandom(seedInt);
+function generateMessageData (alphabet, rng0, clearText, hintsRequested) {
   const rngKeys = seedrandom(rng0());
-  const rngText = seedrandom(rng0());
   const alphabetSize = alphabet.length;
-
-  const clearText = generate(rngText, 30000, 31000, false);
   // const clearText = alphabet.repeat(10);
   const encodingKey = generateKey(alphabet, rngKeys); // encoding keys in decoding order
   const decodingKey = inversePermutation(alphabet, encodingKey);
@@ -264,6 +266,10 @@ function generateTaskData (task) {
     task.random_seed = 1;
   }
 
+  const rng0 = seedrandom(task.random_seed);
+  const rngText = seedrandom(rng0());
+  const {messages: messageList, passwords} = genMessagesForVersion(version, rngText);
+
   // hints per message
   const hintsRequested = getHintsRequested(task.hints_requested);
 
@@ -277,7 +283,7 @@ function generateTaskData (task) {
       decodingKey
     } = generateMessageData(
       alphabet,
-      task.random_seed + m * 5,
+      rng0, messageList[m],
       hintsRequested[m] || []
     );
     messages.push({cipherText, hints, frequencies});
@@ -288,7 +294,8 @@ function generateTaskData (task) {
     alphabet,
     config,
     referenceFrequencies,
-    messages
+    messages,
+    passwords
   };
 
   return {publicData, privateData};
@@ -376,9 +383,11 @@ function grantHints (alphabet, encodingKey, decodingKey, hintRequests) {
     let {messageIndex, cellRank, type} = hintRequest;
     if (type === "type_1") {
       symbol = decodingKey[cellRank];
-    } else {
+    } else if (type === "type_2") {
       symbol = alphabet[cellRank];
       cellRank = alphabet.indexOf(encodingKey[cellRank]);
+    } else {
+      return {messageIndex, cellRank, symbol:'', key:encodingKey, type};
     }
     return {messageIndex, cellRank, symbol, type};
   });
