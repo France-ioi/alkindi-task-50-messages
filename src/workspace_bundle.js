@@ -4,7 +4,7 @@ import {connect} from 'react-redux';
 import {selectTaskData} from './utils';
 
 function WorkspaceSelector (state) {
-  const {numMessages} = selectTaskData(state);
+  const {numMessages, cipherText} = selectTaskData(state);
   const {
     views: {CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints, Search},
     taskData: {config: {showSearchTool}, passwords},
@@ -13,7 +13,7 @@ function WorkspaceSelector (state) {
 
   return {
     CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints, Search,
-    messageIndex, numMessages, showSearchTool, passwords
+    messageIndex, numMessages, showSearchTool, passwords, cipherText
   };
 }
 
@@ -21,7 +21,7 @@ class Workspace extends React.PureComponent {
   render () {
     const {
       CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints, Search,
-      messageIndex, numMessages, showSearchTool, passwords
+      messageIndex, numMessages, showSearchTool, passwords, cipherText
     } = this.props;
     const getPasswordTxt = () => {
       return passwords.map(s => <strong>{s}</strong>).reduce((accu, elem) => {
@@ -35,6 +35,7 @@ class Workspace extends React.PureComponent {
         {(numMessages > 1) && <MultiMessage />}
         <br />
         <h2>{"Message chiffré"}</h2>
+        <h4>Ce message contient {cipherText.length} lettres</h4>
         <CipheredText />
         {showSearchTool && (
           <div style={{margin: "5px auto"}}>
