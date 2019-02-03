@@ -53,7 +53,18 @@ function genPassword (type, rng) {
       pass.push(extraB);
    }
 
-   shuffle(pass, rng);
+   var isValid = false;
+   while (!isValid) {
+      shuffle(pass, rng);
+      isValid = true;
+      var prevLetter = '#';
+      for (var iLetter = 0; iLetter < pass.length; iLetter++) {
+         if (pass[iLetter] == prevLetter) {
+            isValid = false;
+         }
+         prevLetter = pass[iLetter];
+      }
+   }
 
    var strPass = "K" + pass.join('');
    //console.log(strPass);

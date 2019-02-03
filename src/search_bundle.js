@@ -227,22 +227,23 @@ class SearchToolView extends React.PureComponent {
     return (
       <div className="search">
         <div className="search-box">
-          <label className="title">Pattern: </label>
+          <label className="title">Motif : </label>
           <input type="text" className="pattern" value={pattern} onChange={this.searchPatternChange} onKeyPress={this.onKeyPress} />
         </div>
         <div className="note">
           <div style={{width: "50%"}}>
-            a,b,c and d each represent a symbol, always the same.<br />
-            each ? may represent any symbol <br />
-            each * may represent any sequence of symbols
+            les lettres majuscules se représentent elles mêmes<br/>
+            chaque ? représente n'importe-quel symbole<br/>
+            chaque * représente une séquence de symboles<br/>
+            a,b,c et d représentent chacune toujours le même symbole<br/>
           </div>
           <div style={{width: "30%"}}>
-            {isActive && (<label style={{float: "right"}} className="occurrences">{numResults} occurence found</label>)}
-            {(isActive && numResults > 0) && (<p style={{float: "right", clear: 'both'}} >current match: {highlightFocus + 1}</p>)}
+            {isActive && (<label style={{float: "right"}} className="occurrences">{numResults} occurrences trouvées</label>)}
+            {(isActive && numResults > 0) && (<p style={{float: "right", clear: 'both'}} >occurrence actuelle : {highlightFocus + 1}</p>)}
           </div>
           <div style={{width: "17%"}}>
-            <Button onClick={this.findNext.bind(this)}>Next</Button>
-            <Button onClick={this.findPrevious.bind(this)}>Previous</Button>
+            <Button onClick={this.findNext.bind(this)}>Suivant</Button>
+            <Button onClick={this.findPrevious.bind(this)}>Précédent</Button>
           </div>
         </div>
       </div>
