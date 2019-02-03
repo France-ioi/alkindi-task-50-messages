@@ -104,9 +104,6 @@ function HintsPresentor ({pointsTxt, isLeft, children}) {
     }
     return (
         <div style={customBorder}>
-            <p style={{fontWeight: "bold", textAlign: "center"}}>
-                {"Indices"}
-            </p>
             <p>
                 {"Pour un coût de "}
                 <span style={{fontWeight: "bold"}}>{pointsTxt}</span>
@@ -130,9 +127,6 @@ function HintsPresentor2 ({isLeft, isRight = false, children}) {
     }
     return (
         <div style={customBorder}>
-            <p style={{fontWeight: "bold", textAlign: "center"}}>
-                {"Indices"}
-            </p>
             <p>&nbsp;</p>
             <p>
                 {
@@ -173,7 +167,7 @@ class Hints extends React.PureComponent {
             <div>
                 <div style={{width: "100%", margin: "20px 0"}}>
                     <div style={{textAlign: "center"}}>
-                        <h5>Hints</h5>
+                        <h5>Indices</h5>
                         <HintsPresentor pointsTxt={`${numMessages === 50 ? "1" : "5"} points`} isLeft={true}>
                             <Hint1View {...this.props} />
                         </HintsPresentor>
