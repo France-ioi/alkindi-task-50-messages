@@ -7,13 +7,13 @@ function WorkspaceSelector (state) {
   const {numMessages} = selectTaskData(state);
   const {
     views: {CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints, Search},
-    taskData: {config: {showSearchTool}},
+    taskData: {config: {showSearchTool}, passwords},
     messageIndex
   } = state;
 
   return {
     CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints, Search,
-    messageIndex, numMessages, showSearchTool
+    messageIndex, numMessages, showSearchTool, passwords
   };
 }
 
@@ -21,10 +21,17 @@ class Workspace extends React.PureComponent {
   render () {
     const {
       CipheredText, FrequencyAnalysis, Substitution, DecipheredText, MultiMessage, HintRequestFeedback, Hints, Search,
-      messageIndex, numMessages, showSearchTool,
+      messageIndex, numMessages, showSearchTool, passwords
     } = this.props;
+    const getPasswordTxt = () => {
+      return passwords.map(s => <strong>{s}</strong>).reduce((accu, elem) => {
+        return accu === null ? [elem] : [...accu, ' and ', elem];
+      }, null);
+    };
     return (
       <div>
+        {passwords && (<h4 style={{marginTop: '25px', marginBottom: '0'}}>
+          Here are the two passwords contained in the original message: {getPasswordTxt()}.</h4>)}
         {(numMessages > 1) && <MultiMessage />}
         <br />
         <h2>{"Message chiffré"}</h2>
