@@ -38,7 +38,7 @@ class Workspace extends React.PureComponent {
         <CipheredText />
         {showSearchTool && (
           <div style={{margin: "5px auto"}}>
-            <h2>Search Tool</h2>
+            <h2>Recherche de motif</h2>
             <Search />
           </div>
         )}
