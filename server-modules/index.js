@@ -244,7 +244,7 @@ function grade50Messages (alphabet, messages, privateData, hintsRequested, submi
       return " " + numArr[0];
     }
     const last = numArr[numArr.length - 1].toString();
-    return "s " + numArr.join(', ').replace(', ' + last, ' and ' + last);
+    return numArr.join(', ').replace(', ' + last, ' and ' + last);
   }
 
   if (decryptedMessages.length > 0) {
