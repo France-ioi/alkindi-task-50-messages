@@ -41,7 +41,7 @@ const versions = [
   [],
   {numMessages: 1, showSearchTool: false},
   {numMessages: 1, showSearchTool: true},
-  {numMessages: 50, showSearchTool: false}
+  {numMessages: 50, showSearchTool: true}
 ];
 
 /**
