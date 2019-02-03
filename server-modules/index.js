@@ -2,6 +2,8 @@ var {range} = require("range");
 var seedrandom = require("seedrandom");
 var {shuffle} = require("shuffle");
 var {genMessagesForVersion} = require('./generator');
+var cache = require('lru-node-cache');
+var lncObj = new cache.LRU(1000);
 /**
  * Default constants
  */
@@ -52,7 +54,9 @@ module.exports.config = {
 };
 
 module.exports.taskData = function (args, callback) {
+  console.time('gen data');
   const {publicData} = generateTaskData(args.task);
+  console.timeEnd('gen data');
   callback(null, publicData);
 };
 
@@ -169,10 +173,10 @@ function gradeSingleMessage (alphabet, cipherText, clearText, hintsRequested, su
 function grade50Messages (alphabet, messages, privateData, hintsRequested, submittedKeys) {
   const evalLength = 200; /* Score on first 200 characters only */
   const nHints = range(0, 50)
-  .map(index =>
-    Array.isArray(hintsRequested[index])
-    ? ((((hintsRequested[index]).filter(h => h.type === 'type_3')).length === 0) ? hintsRequested[index].length : 26)
-    : 0)
+    .map(index =>
+      Array.isArray(hintsRequested[index])
+        ? ((((hintsRequested[index]).filter(h => h.type === 'type_3')).length === 0) ? hintsRequested[index].length : 26)
+        : 0)
     .reduce(function (total, current) {return current + total;}, 0);
 
   function grade (alphabet, clearText, cipherText, submittedKey) {
@@ -292,6 +296,18 @@ function getHintsRequested (hints_requested) {
     }, {});
 }
 
+function getMessageData (seed, version, rng0) {
+  const key = `task50.v${version}_${seed}`;
+  let data = lncObj.get(key);
+  if (!data) {
+    const rngText = seedrandom(rng0());
+    const {messages: messageList, passwords} = genMessagesForVersion(version, rngText);
+    data = [messageList, passwords];
+    lncObj.set(key, data);
+  }
+  return data;
+}
+
 function generateTaskData (task) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const version = parseInt(task.params.version) || 1;
@@ -303,8 +319,7 @@ function generateTaskData (task) {
   }
 
   const rng0 = seedrandom(task.random_seed);
-  const rngText = seedrandom(rng0());
-  const {messages: messageList, passwords} = genMessagesForVersion(version, rngText);
+  const [messageList, passwords] = getMessageData(task.random_seed, version, rng0);
 
   // hints per message
   const hintsRequested = getHintsRequested(task.hints_requested);
