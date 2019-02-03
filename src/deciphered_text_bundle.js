@@ -5,19 +5,20 @@
 - scrolling does not affect the current animation position
 */
 
-
 import React from 'react';
 import {connect} from 'react-redux';
 
-import {updateGridGeometry, updateGridVisibleRows, applySubstitutions, selectTaskData} from './utils';
+import {updateGridGeometry, updateGridVisibleRows, applySubstitutions, selectTaskData, getClassNames} from './utils';
 
 function appInitReducer (state, _action) {
-  return {...state, decipheredText: {
-    cellWidth: 15,
-    cellHeight: 46,
-    scrollTop: 0,
-    nbCells: 0
-  }};
+  return {
+    ...state, decipheredText: {
+      cellWidth: 15,
+      cellHeight: 46,
+      scrollTop: 0,
+      nbCells: 0
+    }
+  };
 }
 
 function taskInitReducer (state, _action) {
@@ -59,6 +60,7 @@ function decipheredTextLateReducer (state, _action) {
   const {alphabet, cipherText} = selectTaskData(state);
   const position = cipherText.length - 1;
 
+
   function getCell (index) {
     const ciphered = cipherText[index];
     const cell = {position: index, ciphered};
@@ -80,10 +82,10 @@ function decipheredTextLateReducer (state, _action) {
 function DecipheredTextViewSelector (state) {
   const {actions, decipheredText} = state;
   const {decipheredTextResized, decipheredTextScrolled, schedulingJump} = actions;
-  const {width, height, cellWidth, cellHeight, bottom, pageRows, pageColumns, visible} = decipheredText;
+  const {width, height, cellWidth, cellHeight, bottom, pageRows, pageColumns, visible, scrollTop} = decipheredText;
   return {
     decipheredTextResized, decipheredTextScrolled, schedulingJump,
-    width, height, visibleRows: visible.rows, cellWidth, cellHeight, bottom, pageRows, pageColumns
+    width, height, visibleRows: visible.rows, cellWidth, cellHeight, bottom, pageRows, pageColumns, scrollTop
   };
 }
 
@@ -92,12 +94,12 @@ class DecipheredTextView extends React.PureComponent {
     const {width, height, visibleRows, cellWidth, cellHeight, bottom} = this.props;
     return (
       <div ref={this.refTextBox} onScroll={this.onScroll} style={{position: 'relative', width: width && `${width}px`, height: height && `${height}px`, overflowY: 'scroll'}}>
-        {(visibleRows||[]).map(({index, columns}) =>
+        {(visibleRows || []).map(({index, columns}) =>
           <div key={index} style={{position: 'absolute', top: `${index * cellHeight}px`}}>
-            {columns.map(({index, position, ciphered, clear, isHint, locked}) =>
-              <TextCell key={index} column={index} position={position} ciphered={ciphered} clear={clear} isHint={isHint}  locked={locked} cellWidth={cellWidth} />)}
+            {columns.map(({index, position, ciphered, clear, isHint, locked, colorClass, borderClass}) =>
+              <TextCell key={index} colorClass={colorClass} borderClass={borderClass} column={index} position={position} ciphered={ciphered} clear={clear} isHint={isHint} locked={locked} cellWidth={cellWidth} />)}
           </div>)}
-        <div style={{position: 'absolute', top: `${bottom}px`, width: '1px', height: '1px'}}/>
+        <div style={{position: 'absolute', top: `${bottom}px`, width: '1px', height: '1px'}} />
       </div>
     );
   }
@@ -111,11 +113,14 @@ class DecipheredTextView extends React.PureComponent {
     const scrollTop = this._textBox.scrollTop;
     this.props.dispatch({type: this.props.decipheredTextScrolled, payload: {scrollTop}});
   };
+  componentDidUpdate () {
+    this._textBox.scrollTop = this.props.scrollTop;
+  }
 }
 
 class TextCell extends React.PureComponent {
   render () {
-    const {column, ciphered, clear, isHint, locked, cellWidth} = this.props;
+    const {column, ciphered, clear, isHint, locked, cellWidth, colorClass, borderClass} = this.props;
     const cellStyle = {
       position: 'absolute',
       left: `${column * cellWidth}px`,
@@ -127,7 +132,7 @@ class TextCell extends React.PureComponent {
       cursor: 'pointer'
     };
     return (
-      <div style={cellStyle}>
+      <div className={`${getClassNames(colorClass, borderClass)}`} style={cellStyle}>
         <div style={{width: '100%', height: '20px', borderBottom: '1px solid #ccc', textAlign: 'center'}}>{ciphered || ' '}</div>
         <div style={{width: '100%', height: '20px', textAlign: 'center'}}>{clear || ' '}</div>
       </div>
@@ -143,6 +148,7 @@ export default {
   actionReducers: {
     appInit: appInitReducer,
     taskInit: taskInitReducer,
+    taskRefresh: taskRefreshReducer,
     decipheredTextResized: decipheredTextResizedReducer,
     decipheredTextScrolled: decipheredTextScrolledReducer,
   },

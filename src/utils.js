@@ -338,3 +338,28 @@ export function getStartEndOfVisibleRows (props) {
   const rowEndPos = (lastRow * pageColumns) + pageColumns - 1;
   return [rowStartPos, rowEndPos];
 }
+
+export function getUpdatedRows (i, focusStart, focusEnd, colors, rows) {
+  const newRows = [];
+  rows.forEach((row) => {
+    const newCol = [];
+    row.columns.forEach((col) => {
+      let borderClass = null;
+      let colorClass = null;
+      colorClass = colors[i];
+      if (i >= focusStart && i <= focusEnd) {
+        if (i === focusStart) {
+          borderClass = "highlight highlight-start";
+        } else if (i === focusEnd) {
+          borderClass = "highlight highlight-end";
+        } else {
+          borderClass = "highlight highlight-mid";
+        }
+      }
+      newCol.push(update(col, {colorClass: {$set: colorClass}, borderClass: {$set: borderClass}}));
+      i++;
+    });
+    newRows.push(update(row, {columns: {$set: newCol}}));
+  });
+  return newRows;
+}

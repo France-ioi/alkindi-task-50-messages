@@ -210,30 +210,30 @@
 }
 
 .group-color-caps {
-background-color: #fb6161;
+background-color: #fb6161 !important;
 }
 
 .group-color-star {
-background-color: #e4e73b;
+background-color: #e4e73b !important;
 }
 
 .group-color-dot {
-background-color: #f7a13f;
+background-color: #f7a13f !important;
 }
 .group-color-0 {
-background-color: #52ccee;
+background-color: #52ccee !important;
 }
 .group-color-1 {
-background-color: #f552a6;
+background-color: #f552a6 !important;
 }
 .group-color-2 {
-background-color: #ee5858;
+background-color: #ee5858 !important;
 }
 .group-color-3 {
-background-color: #a765f1;
+background-color: #a765f1 !important;
 }
 .group-color-4 {
-background-color: #5df3a0;
+background-color: #5df3a0 !important;
 }
 
 

@@ -4,7 +4,8 @@ import {connect} from 'react-redux';
 import update from 'immutability-helper';
 import {Button} from 'react-bootstrap';
 
-import {selectTaskData, patternToRegex, regexSearch, getStartEndOfVisibleRows, calulateHighlightIndexes} from './utils';
+import {selectTaskData, patternToRegex, regexSearch,
+  getStartEndOfVisibleRows, calulateHighlightIndexes, getUpdatedRows} from './utils';
 import {takeEvery} from 'redux-saga';
 import {select, put} from 'redux-saga/effects';
 
@@ -69,34 +70,21 @@ function searchHighlightFocusDataChangedReducer (state, {payload: {highlightFocu
 function searchLateReducer (state) {
   if (state.cipheredText === undefined || state.cipheredText.visible === undefined) return state;
   if (state.search === undefined || state.search.results === null) return state;
-  const {cipheredText, search: {highlightFocusData, isActive, results}} = state;
+  const {cipheredText, decipheredText, search: {highlightFocusData, isActive, results}} = state;
   const {visible: {rows}} = cipheredText;
+  const {visible: {rows: rows2}} = decipheredText;
   if (rows === undefined || rows.length === 0 || !isActive || results.length === 0 || highlightFocusData.length === 0) return state;
   const [focusStart, focusEnd, colors] = highlightFocusData;
-  const [rowStartPos] = getStartEndOfVisibleRows(cipheredText);
+  let [rowStartPos] = getStartEndOfVisibleRows(cipheredText);
   let i = rowStartPos;
-  const newRows = [];
-  rows.forEach((row) => {
-    const newCol = [];
-    row.columns.forEach((col) => {
-      let borderClass = null;
-      let colorClass = null;
-      colorClass = colors[i];
-      if (i >= focusStart && i <= focusEnd) {
-        if (i === focusStart) {
-          borderClass = "highlight highlight-start";
-        } else if (i === focusEnd) {
-          borderClass = "highlight highlight-end";
-        } else {
-          borderClass = "highlight highlight-mid";
-        }
-      }
-      newCol.push(update(col, {colorClass: {$set: colorClass}, borderClass: {$set: borderClass}}));
-      i++;
-    });
-    newRows.push(update(row, {columns: {$set: newCol}}));
+  const newRows = getUpdatedRows(i, focusStart, focusEnd, colors, rows);
+  [rowStartPos] = getStartEndOfVisibleRows(decipheredText);
+  i = rowStartPos;
+  const newRows2 = getUpdatedRows(i, focusStart, focusEnd, colors, rows2);
+  return update(state, {
+    cipheredText: {visible: {rows: {$set: newRows}}},
+    decipheredText: {visible: {rows: {$set: newRows2}}}
   });
-  return update(state, {cipheredText: {visible: {rows: {$set: newRows}}}});
 }
 
 function* highlightFocusChangedSaga () {
@@ -109,6 +97,7 @@ function* highlightFocusChangedSaga () {
   }
   yield put({type: actions.searchHighlightFocusDataChanged, payload: {highlightFocusData}});
   yield scrollToHighlightFocusSaga();
+  yield scrollToHighlightFocusSaga2();
 }
 
 function* scrollToHighlightFocusSaga () {
@@ -136,6 +125,34 @@ function* scrollToHighlightFocusSaga () {
     if (scrollTop < 0) {scrollTop = 0;}
   }
   yield put({type: actions.cipheredTextScrolled, payload: {scrollTop}});
+}
+
+function* scrollToHighlightFocusSaga2 () {
+  const {actions, searchInfo, decipheredText} = yield select(({actions, search: searchInfo, decipheredText}) => ({actions, searchInfo, decipheredText}));
+  const {isActive, results, highlightFocus} = searchInfo;
+  let {visible: {rows}, cellHeight, pageColumns, pageRows, nbCells} = decipheredText;
+  pageRows = 4;
+  if (!isActive || results.length === 0 || !results[highlightFocus]) {
+    yield put({type: actions.decipheredTextScrolled, payload: {scrollTop: 0}});
+    return;
+  }
+  let {scrollTop} = decipheredText;
+  const bottom = Math.ceil(nbCells / pageColumns) * cellHeight - 1;
+  const maxTop = Math.max(0, bottom + 1 - pageRows * cellHeight);
+  const match = results[highlightFocus];
+  const startPos = match.index;
+  const focusStartRow = Math.floor(startPos / pageColumns);
+  const visibleFirstRow = rows[0].index;
+  const visibleLastRow = rows[pageRows - 1].index;
+  // focus going out of visibla rows
+  if (focusStartRow >= visibleLastRow) {
+    scrollTop = (focusStartRow - 1) * cellHeight;
+    scrollTop = Math.min(maxTop, scrollTop);
+  } else if (focusStartRow <= visibleFirstRow) {
+    scrollTop = (focusStartRow - 1) * (cellHeight);
+    if (scrollTop < 0) {scrollTop = 0;}
+  }
+  yield put({type: actions.decipheredTextScrolled, payload: {scrollTop}});
 }
 
 function SearchToolViewSelector (state) {
@@ -170,7 +187,6 @@ class SearchToolView extends React.PureComponent {
     let regexResults = [];
     this.props.dispatch({type: this.props.searchIsActiveChanged, payload: {isActive: true}});
     const [regex, replacer] = patternToRegex(pattern);
-    console.log('regex :', regex);
     regexResults = regexSearch(regex, cipherText);
     this.props.dispatch({type: this.props.searchResultsChanged, payload: {results: regexResults || [], replacer, numResults: regexResults.length}});
   }
