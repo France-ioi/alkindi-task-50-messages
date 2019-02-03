@@ -136,7 +136,7 @@ function HintsPresentor2 ({isLeft, isRight = false, children}) {
             <p>&nbsp;</p>
             <p>
                 {
-                    "Get answer key as hints..."
+                    "Demander tous les indices"
                 }
             </p>
             {children}
