@@ -4,8 +4,10 @@ import {connect} from 'react-redux';
 import update from 'immutability-helper';
 import {Button} from 'react-bootstrap';
 
-import {selectTaskData, patternToRegex, regexSearch,
-  getStartEndOfVisibleRows, calulateHighlightIndexes, getUpdatedRows} from './utils';
+import {
+  selectTaskData, patternToRegex, regexSearch,
+  getStartEndOfVisibleRows, calulateHighlightIndexes, getUpdatedRows
+} from './utils';
 import {takeEvery} from 'redux-saga';
 import {select, put} from 'redux-saga/effects';
 
@@ -85,6 +87,20 @@ function searchLateReducer (state) {
     cipheredText: {visible: {rows: {$set: newRows}}},
     decipheredText: {visible: {rows: {$set: newRows2}}}
   });
+}
+
+function* searchSaga () {
+  const {actions, messages, messageIndex, searchInfo: {pattern}} = yield select(({actions, taskData:{messages}, messageIndex, search: searchInfo}) => ({actions, messages, messageIndex, searchInfo}));
+  if (pattern !== null && pattern !== '') {
+    yield put({type: actions.searchIsActiveChanged, payload: {isActive: true}});
+    let regexResults = [];
+    const [regex, replacer] = patternToRegex(pattern);
+    regexResults = regexSearch(regex, messages[messageIndex].cipherText);
+    yield put({type: actions.searchResultsChanged, payload: {results: regexResults || [], replacer, numResults: regexResults.length}});
+    if (regexResults.length > 0) {
+      yield put({type: actions.searchHighlightFocusChanged, payload: {highlightFocus: 0}});
+    }
+  }
 }
 
 function* highlightFocusChangedSaga () {
@@ -232,10 +248,10 @@ class SearchToolView extends React.PureComponent {
         </div>
         <div className="note">
           <div style={{width: "50%"}}>
-            les lettres majuscules se représentent elles mêmes<br/>
-            chaque ? représente n'importe-quel symbole<br/>
-            chaque * représente une séquence de symboles<br/>
-            a,b,c et d représentent chacune toujours le même symbole<br/>
+            les lettres majuscules se représentent elles mêmes<br />
+            chaque ? représente n'importe-quel symbole<br />
+            chaque * représente une séquence de symboles<br />
+            a,b,c et d représentent chacune toujours le même symbole<br />
           </div>
           <div style={{width: "30%"}}>
             {isActive && (<label style={{float: "right"}} className="occurrences">{numResults} occurrences trouvées</label>)}
@@ -273,6 +289,7 @@ export default {
   saga: function* () {
     const actions = yield select((state) => state.actions);
     yield takeEvery(actions.searchHighlightFocusChanged, highlightFocusChangedSaga);
+    yield takeEvery(actions.multiMessageIndexChanged, searchSaga);
   },
   views: {
     Search: connect(SearchToolViewSelector)(SearchToolView),
