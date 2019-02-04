@@ -39,10 +39,11 @@ class Hint1View extends React.PureComponent {
 
 class Hint3View extends React.PureComponent {
     render () {
-        const {hintRequest: {isActive}} = this.props;
+        const {hintRequest: {isActive}, isAllHint} = this.props;
+
         return (
             <div style={{textAlign: "center", margin: "10px 0", paddingTop: '10px'}}>
-                <Button onClick={this.requestHint} disabled={isActive}>{`Valider`}</Button>
+                <Button onClick={this.requestHint} disabled={isActive || isAllHint}>{`Valider`}</Button>
             </div>
         );
     }
@@ -58,9 +59,9 @@ class Hint2View extends React.PureComponent {
         this.state = {index: ""};
     }
     render () {
-        const {alphabet, hints, lockedLetters, hintRequest: {isActive}, pointsTxt, isLeft} = this.props;
+        const {alphabet, hints, isAllHint, lockedLetters, hintRequest: {isActive}, pointsTxt, isLeft} = this.props;
 
-        const knownLetters = hints
+        const knownLetters = isAllHint ? alphabet.split("") :  hints
             .map(({symbol}) => symbol)
             .concat(lockedLetters);
 
@@ -165,10 +166,11 @@ function HintSelector (state) {
         }
     }
     const lockedLetters = cells.filter(cell => cell.locked).map(cell => cell.editable);
+    const isAllHint = (hints.length > 0 && (hints.map(({messageIndex: i, type}) => (messageIndex === i && type == 'type_3')).filter(bool => bool)).length !== 0) || false;
 
     return {
         requestHint, hintRequestFeedbackCleared,
-        alphabet, hints, messageIndex, numMessages, hintRequest, lockedLetters, hintRequestData
+        alphabet, hints, isAllHint, messageIndex, numMessages, hintRequest, lockedLetters, hintRequestData
     };
 }
 
