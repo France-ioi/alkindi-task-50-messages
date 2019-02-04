@@ -314,9 +314,9 @@ function generateTaskData (task) {
   const config = versions[version]; // specification of decoding substitutions
   const messages = [];
   const privateData = [];
-  if (process.env.DEV_MODE) {
-    task.random_seed = 1;
-  }
+  // if (process.env.DEV_MODE) {
+  //   task.random_seed = 1;
+  // }
 
   const rng0 = seedrandom(task.random_seed);
   const [messageList, passwords] = getMessageData(task.random_seed, version, rng0);
