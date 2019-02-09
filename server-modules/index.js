@@ -54,9 +54,9 @@ module.exports.config = {
 };
 
 module.exports.taskData = function (args, callback) {
-  console.time('gen data task50_2');
+  console.time('gen data');
   const {publicData} = generateTaskData(args.task);
-  console.timeEnd('gen data task50_2');
+  console.timeEnd('gen data');
   callback(null, publicData);
 };
 
@@ -299,8 +299,8 @@ function getHintsRequested (hints_requested) {
 function getMessageData (seed, version, rng0) {
   const key = `task50.v${version}_${seed}`;
   let data = lncObj.get(key);
-  const rngText = seedrandom(rng0());
   if (!data) {
+    const rngText = seedrandom(rng0());
     const {messages: messageList, passwords} = genMessagesForVersion(version, rngText);
     data = [messageList, passwords];
     lncObj.set(key, data);
@@ -312,54 +312,84 @@ function generateTaskData (task) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const version = parseInt(task.params.version) || 1;
   const config = versions[version]; // specification of decoding substitutions
+  const messages = [];
+  const privateData = [];
+  // if (process.env.DEV_MODE) {
+  //   task.random_seed = 1;
+  // }
 
-  const seed = task.random_seed + 11;
+  // const seed = task.random_seed + 0;
 
-  const rng0 = seedrandom(seed);
-  const rngText = seedrandom(rng0());
+  // const rng0 = seedrandom(seed);
+  // const rngText = seedrandom(rng0());
 
-  const key = `task50.v${version}_${seed}`;
-  console.log('Cache Key :', key);
-  const data = lncObj.get(key);
-  // const data = null;
+  // const key = `task50.v${version}_${seed}`;
+  // console.log('Cache Key :', key);
+  // const data = lncObj.get(key);
+  // // const data = null;
 
-  let [messages, privateData, passwords] = data || [[],[],[]];
+  // let [messages, privateData, passwords] = data || [[],[],[]];
 
-  if (!data) {
-    console.log('New Data');
-    const {messages: messageList, passwords: passwordsList} = genMessagesForVersion(version, rngText);
-    passwords = passwordsList;
+  // if (!data) {
+  //   console.log('New Data');
+  //   const {messages: messageList, passwords: passwordsList} = genMessagesForVersion(version, rngText);
+  //   passwords = passwordsList;
 
-    for (let m = 0; m < config.numMessages; m++) {
-      const {
-        cipherText,
-        frequencies,
-        clearText,
-        encodingKey,
-        decodingKey
-      } = generateMessageData(
-        alphabet,
-        rng0,
-        messageList[m]
-      );
+  //   for (let m = 0; m < config.numMessages; m++) {
+  //     const {
+  //       cipherText,
+  //       frequencies,
+  //       clearText,
+  //       encodingKey,
+  //       decodingKey
+  //     } = generateMessageData(
+  //       alphabet,
+  //       rng0,
+  //       messageList[m]
+  //     );
 
-      console.log('encodingKey :', encodingKey);
-      messages.push({cipherText, frequencies});
-      privateData.push({clearText, encodingKey, decodingKey});
-    }
+  //     console.log('encodingKey :', encodingKey);
+  //     messages.push({cipherText, frequencies});
+  //     privateData.push({clearText, encodingKey, decodingKey});
+  //   }
 
-    lncObj.set(key, [messages, privateData, passwords]);
-  } else {
-    console.log('Cached Data');
-  }
+  //   lncObj.set(key, [messages, privateData, passwords]);
+  // } else {
+  //   console.log('Cached Data');
+  // }
 
+  // const hintsRequested = getHintsRequested(task.hints_requested);
+
+  // for (let m = 0; m < config.numMessages; m++) {
+  //   const hints = grantHints(alphabet, privateData[m].encodingKey, privateData[m].decodingKey, hintsRequested[m]);
+  //   messages[m].hints = hints;
+  // }
+  //
+  // const publicData = {
+
+  const rng0 = seedrandom(task.random_seed + 11);
+  const [messageList, passwords] = getMessageData(task.random_seed + 11, version, rng0);
+  const rng1 = seedrandom(task.random_seed + 11);
+
+  // hints per message
   const hintsRequested = getHintsRequested(task.hints_requested);
 
   for (let m = 0; m < config.numMessages; m++) {
-    const hints = grantHints(alphabet, privateData[m].encodingKey, privateData[m].decodingKey, hintsRequested[m]);
-    messages[m].hints = hints;
+    const {
+      cipherText,
+      hints,
+      frequencies,
+      clearText,
+      encodingKey,
+      decodingKey
+    } = generateMessageData(
+      alphabet,
+      rng1, messageList[m],
+      hintsRequested[m] || []
+    );
+    messages.push({cipherText, hints, frequencies});
+    privateData.push({clearText, encodingKey, decodingKey});
   }
-
 
   const publicData = {
     alphabet,
@@ -448,7 +478,7 @@ function hintRequestEqual (h1, h2) {
   );
 }
 
-function grantHints (alphabet, encodingKey, decodingKey, hintRequests = []) {
+function grantHints (alphabet, encodingKey, decodingKey, hintRequests) {
   return hintRequests.map(function (hintRequest) {
     let symbol;
     let {messageIndex, cellRank, type} = hintRequest;
